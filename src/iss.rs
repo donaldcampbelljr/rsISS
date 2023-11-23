@@ -5,6 +5,8 @@ pub struct Iss {
     pub lat: f64,
     pub lon: f64,
     pub alt: f64,
+    pub time: f64,
+    pub alt_data: Vec<(f64,f64)>,
 }
 
 impl Iss {
@@ -19,6 +21,8 @@ impl Iss {
         self.lat = new_position.0;
         self.lon = new_position.1;
         self.alt = new_position.2;
+        self.time = new_position.3;
+        self.alt_data.push((new_position.3, new_position.2));
     }
     // fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     //     write!(f, "ISS {{ latitude: {}, longitude: {} }}", self.lat, self.lon)
@@ -27,7 +31,7 @@ impl Iss {
 }
 
 
-pub fn get_position() -> Result<(f64,f64, f64), Box<dyn std::error::Error>> {
+pub fn get_position() -> Result<(f64,f64, f64, f64), Box<dyn std::error::Error>> {
 
     //let mut res = reqwest::blocking::get("http://api.open-notify.org/iss-now.json")?;
     // https://api.wheretheiss.at/v1/satellites/25544
@@ -43,8 +47,9 @@ pub fn get_position() -> Result<(f64,f64, f64), Box<dyn std::error::Error>> {
     let latitude: f64 = json["latitude"].as_f64().expect("Desire a number");
     let longitude: f64 = json["longitude"].as_f64().expect("Desire a number");
     let altitude: f64 = json["altitude"].as_f64().expect("Desire a number");
+    let timestamp: f64 = json["timestamp"].as_f64().expect("Desire a number");
         // .as_str().expect("str expected")
         // .parse().expect("Desire a number");
 
-    Ok((latitude,longitude, altitude))
+    Ok((latitude,longitude, altitude, timestamp))
 }

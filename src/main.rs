@@ -24,13 +24,13 @@ pub mod iss;
 //     (-2872.12994324591, 615.821403372990),
 // ];
 
-const ISS_DATA: [(f64, f64); 5] = [
-    (1.0, 2.0),
-    (2.0, 4.0),
-    (3.0, 6.0),
-    (4.0, 8.0),
-    (5.0, 10.0),
-];
+// const ISS_DATA: [(f64, f64); 5] = [
+//     (1.0, 2.0),
+//     (2.0, 4.0),
+//     (3.0, 6.0),
+//     (4.0, 8.0),
+//     (5.0, 10.0),
+// ];
 // /// Shape to draw a world map with the given resolution and color
 // #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
 // pub struct Map {
@@ -71,42 +71,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the terminal backend using crossterm
     let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
 
-    let datasets = vec![Dataset::default()
-        .name("data")
-        .marker(symbols::Marker::Braille)
-        .style(Style::default().fg(Color::Yellow))
-        .graph_type(GraphType::Line)
-        .data(&ISS_DATA)];
-
-    // let map_res_data = MapResolution::High.into([f64,f64]);
-
-    // let map_data =vec![Dataset::default()
-    //     .name("data")
+    // let datasets = vec![Dataset::default()
+    //     .name("coord")
     //     .marker(symbols::Marker::Braille)
     //     .style(Style::default().fg(Color::Yellow))
     //     .graph_type(GraphType::Line)
-    //     .data(map_res_data)];
-    // let chart = Chart::new(datasets)
-    //     .block(
-    //         Block::default()
-    //             .title("Chart 3".cyan().bold())
-    //             .borders(Borders::ALL),
-    //     )
-    //     .x_axis(
-    //         Axis::default()
-    //             .title("X Axis")
-    //             .style(Style::default().fg(Color::Gray))
-    //             .bounds([0.0, 50.0])
-    //             .labels(vec!["0".bold(), "25".into(), "50".bold()]),
-    //     )
-    //     .y_axis(
-    //         Axis::default()
-    //             .title("Y Axis")
-    //             .style(Style::default().fg(Color::Gray))
-    //             .bounds([0.0, 5.0])
-    //             .labels(vec!["0".bold(), "2.5".into(), "5".bold()]),
-    //     );
-
+    //     .data(&ISS_DATA)];
     // Define our counter variable
     // This is the state of our application
     let mut counter = 0;
@@ -119,50 +89,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([
-                    Constraint::Ratio(1, 3),
-                    Constraint::Ratio(1, 3),
-                    Constraint::Ratio(1, 3),
+                    Constraint::Ratio(1, 9),
+                    Constraint::Ratio(3, 9),
+                    Constraint::Ratio(5, 9),
                 ])
                 .split(size);
-            let map = Map {
-                resolution: MapResolution::Low,
-                color: Color::Blue,
-            };
-            // let rect = Rect::new(50, 0, 10, 10);
-            // let mut buf = Buffer::empty(rect);
-            let mut buf = Buffer::empty(chunks[2]);
-            // Canvas::default()
-            //     .background_color(Color::Blue)
-            //     .block(
-            //         Block::new()
-            //             .padding(Padding::new(1, 0, 1, 0))
-            //             .style(Style::new().red().on_white().bold().italic()),
-            //     )
-            //     .marker(Marker::Dot)
-            //     // picked to show Australia for the demo as it's the most interesting part of the map
-            //     // (and the only part with hops ;))
-            //     // .x_bounds([112.0, 155.0])
-            //     // .y_bounds([-46.0, -11.0])
-            //     .paint(|context| {
-            //         context.draw(&map);
-            //     })
-            //     .render(chunks[2], &mut buf);
+            let datasets2 = vec![Dataset::default()
+                .name("alt")
+                .marker(symbols::Marker::Dot)
+                .style(Style::default().fg(Color::Yellow))
+                .graph_type(GraphType::Line)
+                .data(iss.alt_data.as_slice())];
             f.render_widget(map_canvas(&iss.lat, &iss.lon),chunks[2]);
-            f.render_widget(Chart::new(datasets.clone())
+            f.render_widget(Chart::new(datasets2.clone())
                                 .block(           Block::default()
-                                                      .title("ISS Historical Position".cyan().bold())
+                                                      .title("ISS Altitude".cyan().bold())
                                                       .borders(Borders::ALL),)
                                 .x_axis(            Axis::default()
-                                                        .title("X Axis")
+                                                        .title("Time Stamp")
                                                         .style(Style::default().fg(Color::Gray))
-                                                        .bounds([0.0, 10.0])
+                                                        .bounds([iss.time-50.0, iss.time+50.0])
                                                         .labels(vec!["0".bold(), "25".into(), "50".bold()]),)
                                 .y_axis(            Axis::default()
-                                                        .title("Y Axis")
+                                                        .title("Altitude")
                                                         .style(Style::default().fg(Color::Gray))
-                                                        .bounds([0.0, 10.0])
-                                                        .labels(vec!["0".bold(), "2.5".into(), "5".bold()]),), chunks[0]);
-            f.render_widget(Paragraph::new(format!("Counter: {counter}\n\n ISS Position: {0}  {1}  {2}", iss.lat, iss.lon, iss.alt)), chunks[1]);
+                                                        .bounds([400.0, 450.0])
+                                                        .labels(vec!["400".bold(), "450".into(), "500".bold()]),), chunks[1]);
+            f.render_widget(Paragraph::new(format!("Counter: {counter}\n\n ISS Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2}", iss.lat, iss.lon, iss.alt)), chunks[0]);
         })?;
 
         // Check for user input every 250 milliseconds
@@ -194,8 +147,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn map_canvas(&lat: &f64,&lon: &f64) -> impl Widget + 'static {
     Canvas::default()
-        .block(Block::default().borders(Borders::ALL).title("World"))
-        .marker(Marker::Dot)
+        .block(Block::default().borders(Borders::ALL).title("Current ISS Position".cyan().bold()))
+        .marker(Marker::Braille)
         .paint(move |ctx| {
             ctx.draw(&Map {
                 color: Color::Yellow,
