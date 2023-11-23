@@ -125,27 +125,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ])
                 .split(size);
             let map = Map {
-                resolution: MapResolution::High,
+                resolution: MapResolution::Low,
                 color: Color::Blue,
             };
+            // let rect = Rect::new(50, 0, 10, 10);
+            // let mut buf = Buffer::empty(rect);
             let mut buf = Buffer::empty(chunks[2]);
-            Canvas::default()
-                .background_color(Color::Blue)
-                .block(
-                    Block::new()
-                        .padding(Padding::new(1, 0, 1, 0))
-                        .style(Style::new().red().on_white().bold().italic()),
-                )
-                .marker(Marker::Dot)
-                // picked to show Australia for the demo as it's the most interesting part of the map
-                // (and the only part with hops ;))
-                // .x_bounds([112.0, 155.0])
-                // .y_bounds([-46.0, -11.0])
-                .paint(|context| {
-                    context.draw(&map);
-                })
-                .render(chunks[2], &mut buf);
-
+            // Canvas::default()
+            //     .background_color(Color::Blue)
+            //     .block(
+            //         Block::new()
+            //             .padding(Padding::new(1, 0, 1, 0))
+            //             .style(Style::new().red().on_white().bold().italic()),
+            //     )
+            //     .marker(Marker::Dot)
+            //     // picked to show Australia for the demo as it's the most interesting part of the map
+            //     // (and the only part with hops ;))
+            //     // .x_bounds([112.0, 155.0])
+            //     // .y_bounds([-46.0, -11.0])
+            //     .paint(|context| {
+            //         context.draw(&map);
+            //     })
+            //     .render(chunks[2], &mut buf);
+            f.render_widget(map_canvas(&iss.lat, &iss.lon),chunks[2]);
             f.render_widget(Chart::new(datasets.clone())
                                 .block(           Block::default()
                                                       .title("ISS Historical Position".cyan().bold())
@@ -188,4 +190,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
 
+}
+
+fn map_canvas(&lat: &f64,&lon: &f64) -> impl Widget + 'static {
+    Canvas::default()
+        .block(Block::default().borders(Borders::ALL).title("World"))
+        .marker(Marker::Dot)
+        .paint(move |ctx| {
+            ctx.draw(&Map {
+                color: Color::Yellow,
+                resolution: MapResolution::High,
+            });
+            ctx.print(lat, lon, "ISS".red());
+        })
+        .x_bounds([-180.0, 180.0])
+        .y_bounds([-180.0, 180.0])
 }
