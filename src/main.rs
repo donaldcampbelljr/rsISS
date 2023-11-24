@@ -1,16 +1,7 @@
-use crate::iss::{get_position, Iss};
-use std::{thread, time};
-
-
-// use ratatui::{
-//     prelude::{CrosstermBackend, Terminal},
-//     widgets::Paragraph,
-// };
+use crate::iss::Iss;
 
 use ratatui::{prelude::*, widgets::*};
 use ratatui::widgets::canvas::{MapResolution, Painter, Shape, Canvas, Map};
-
-
 
 pub mod iss;
 
@@ -24,45 +15,9 @@ pub mod iss;
 //     (-2872.12994324591, 615.821403372990),
 // ];
 
-// const ISS_DATA: [(f64, f64); 5] = [
-//     (1.0, 2.0),
-//     (2.0, 4.0),
-//     (3.0, 6.0),
-//     (4.0, 8.0),
-//     (5.0, 10.0),
-// ];
-// /// Shape to draw a world map with the given resolution and color
-// #[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
-// pub struct Map {
-//     pub resolution: MapResolution,
-//     pub color: Color,
-// }
-//
-// impl Widget for Map{
-//     fn render(self, area: Rect, buf: &mut Buffer) {
-//         todo!()
-//     }
-// }
-// impl Shape for Map {
-//     fn draw(&self, painter: &mut Painter) {
-//         for (x, y) in self.resolution.data() {
-//             if let Some((x, y)) = painter.get_point(*x, *y) {
-//                 painter.paint(x, y, self.color);
-//             }
-//         }
-//     }
-// }
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Hello, world!");
-    //
-    //
     let mut iss = Iss::new();
-    // let delay = time::Duration::from_secs(2);
-    // thread::sleep(delay);
     iss.update_position();
-    //
-    // println!("ENDING PROGRAM");
 
     // startup: Enable raw mode for the terminal, giving us fine control over user input
     crossterm::terminal::enable_raw_mode()?;
@@ -71,15 +26,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the terminal backend using crossterm
     let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
 
-    // let datasets = vec![Dataset::default()
-    //     .name("coord")
-    //     .marker(symbols::Marker::Braille)
-    //     .style(Style::default().fg(Color::Yellow))
-    //     .graph_type(GraphType::Line)
-    //     .data(&ISS_DATA)];
-    // Define our counter variable
-    // This is the state of our application
     let mut counter = 0;
+    let mut zoom = 50.0;
+    let mut duration = 0;
 
     // Main application loop
     loop {
@@ -95,26 +44,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ])
                 .split(size);
             let datasets2 = vec![Dataset::default()
-                .name("alt")
+                .name("pos")
                 .marker(symbols::Marker::Dot)
                 .style(Style::default().fg(Color::Yellow))
                 .graph_type(GraphType::Line)
-                .data(iss.alt_data.as_slice())];
-            f.render_widget(map_canvas(&iss.lat, &iss.lon),chunks[2]);
+                .data(iss.pos_data.as_slice())];
+            f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
             f.render_widget(Chart::new(datasets2.clone())
                                 .block(           Block::default()
-                                                      .title("ISS Altitude".cyan().bold())
+                                                      .title("ISS Historical Position".cyan().bold())
                                                       .borders(Borders::ALL),)
                                 .x_axis(            Axis::default()
-                                                        .title("Time Stamp")
+                                                        .title("Lat")
                                                         .style(Style::default().fg(Color::Gray))
-                                                        .bounds([iss.time-50.0, iss.time+50.0])
-                                                        .labels(vec!["0".bold(), "25".into(), "50".bold()]),)
+                                                        .bounds([-180.0, 180.0])
+                                                        .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
                                 .y_axis(            Axis::default()
-                                                        .title("Altitude")
+                                                        .title("Lon")
                                                         .style(Style::default().fg(Color::Gray))
-                                                        .bounds([400.0, 450.0])
-                                                        .labels(vec!["400".bold(), "450".into(), "500".bold()]),), chunks[1]);
+                                                        .bounds([-180.0, 180.0])
+                                                        .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
             f.render_widget(Paragraph::new(format!("Counter: {counter}\n\n ISS Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2}", iss.lat, iss.lon, iss.alt)), chunks[0]);
         })?;
 
@@ -127,10 +76,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         crossterm::event::KeyCode::Char('j') => counter += 1,
                         crossterm::event::KeyCode::Char('k') => counter -= 1,
                         crossterm::event::KeyCode::Char('u') => iss.update_position(),
+                        crossterm::event::KeyCode::Char(']') => zoom-=10.0,
+                        crossterm::event::KeyCode::Char('[') => zoom+=10.0,
                         crossterm::event::KeyCode::Char('q') => break,
                         _ => {},
                     }
                 }
+            }
+        } else{
+            duration += 250;
+
+            if duration >= 5500{
+                iss.update_position();
+                duration = 0;
             }
         }
     }
@@ -141,11 +99,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 
-
-
 }
 
-fn map_canvas(&lat: &f64,&lon: &f64) -> impl Widget + 'static {
+fn map_canvas(&lat: &f64,&lon: &f64, zoom: &f64) -> impl Widget + 'static {
     Canvas::default()
         .block(Block::default().borders(Borders::ALL).title("Current ISS Position".cyan().bold()))
         .marker(Marker::Braille)
@@ -156,6 +112,6 @@ fn map_canvas(&lat: &f64,&lon: &f64) -> impl Widget + 'static {
             });
             ctx.print(lat, lon, "ISS".red());
         })
-        .x_bounds([-180.0, 180.0])
-        .y_bounds([-180.0, 180.0])
+        .x_bounds([lat-zoom, lat+zoom])
+        .y_bounds([lon-zoom, lon+zoom])
 }

@@ -6,7 +6,7 @@ pub struct Iss {
     pub lon: f64,
     pub alt: f64,
     pub time: f64,
-    pub alt_data: Vec<(f64,f64)>,
+    pub pos_data: Vec<(f64,f64)>,
 }
 
 impl Iss {
@@ -22,7 +22,7 @@ impl Iss {
         self.lon = new_position.1;
         self.alt = new_position.2;
         self.time = new_position.3;
-        self.alt_data.push((new_position.3, new_position.2));
+        self.pos_data.push((new_position.0, new_position.1));
     }
     // fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     //     write!(f, "ISS {{ latitude: {}, longitude: {} }}", self.lat, self.lon)
