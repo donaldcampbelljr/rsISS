@@ -2,6 +2,7 @@ use crate::iss::Iss;
 
 use ratatui::{prelude::*, widgets::*};
 use ratatui::widgets::canvas::{MapResolution, Painter, Shape, Canvas, Map};
+use chrono::prelude::*;
 
 pub mod iss;
 
@@ -32,6 +33,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Main application loop
     loop {
+        let utc: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
+        let local: DateTime<Local> = Local::now();
         // Render the UI
         terminal.draw(|f| {
             let size = f.size();
@@ -64,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                         .style(Style::default().fg(Color::Gray))
                                                         .bounds([-180.0, 180.0])
                                                         .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
-            f.render_widget(Paragraph::new(format!("Counter: {counter}\n\n ISS Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2}", iss.lat, iss.lon, iss.alt)), chunks[0]);
+            f.render_widget(Paragraph::new(format!("ISS TRACKER\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4}", iss.lat, iss.lon, iss.alt, utc, local)), chunks[0]);
         })?;
 
         // Check for user input every 250 milliseconds

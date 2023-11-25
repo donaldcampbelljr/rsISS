@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.31"
 crossterm = "0.27.0"
 ratatui = { version = "0.24.0", features = ["all-widgets"] }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
