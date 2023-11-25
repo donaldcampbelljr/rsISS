@@ -1,5 +1,5 @@
 [package]
-name = "iss_ratatui"
+name = "rs_iss"
 version = "0.1.0"
 edition = "2021"
 

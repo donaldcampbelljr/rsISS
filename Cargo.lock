@@ -423,16 +423,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f518f335dce6725a761382244631d86cf0ccb2863413590b31338feb467f9c3"
 
 [[package]]
-name = "iss_ratatui"
-version = "0.1.0"
-dependencies = [
- "crossterm",
- "ratatui",
- "reqwest",
- "serde_json",
-]
-
-[[package]]
 name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -769,6 +759,16 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "rs_iss"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "ratatui",
+ "reqwest",
+ "serde_json",
 ]
 
 [[package]]
