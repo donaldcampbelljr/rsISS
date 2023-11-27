@@ -113,8 +113,8 @@ fn map_canvas(&lat: &f64,&lon: &f64, zoom: &f64) -> impl Widget + 'static {
                 color: Color::Yellow,
                 resolution: MapResolution::High,
             });
-            ctx.print(lat, lon, "ISS".red());
+            ctx.print(lon, lat, "ISS".red());
         })
-        .x_bounds([lat-zoom, lat+zoom])
-        .y_bounds([lon-zoom, lon+zoom])
+        .x_bounds([lon-zoom, lon+zoom])
+        .y_bounds([lat-zoom, lat+zoom])
 }
