@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                         .style(Style::default().fg(Color::Gray))
                                                         .bounds([-180.0, 180.0])
                                                         .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
-            f.render_widget(Paragraph::new(format!("ISS TRACKER\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4}", iss.lat, iss.lon, iss.alt, utc, local)), chunks[0]);
+            f.render_widget(Paragraph::new(format!("ISS TRACKER\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)), chunks[0]);
         })?;
 
         // Check for user input every 250 milliseconds
