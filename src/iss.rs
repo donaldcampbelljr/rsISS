@@ -1,5 +1,7 @@
 use std::io::Read;
 use serde_json::{Value};
+use rgeo::{search};
+use country_emoji::{flag};
 #[derive(Debug,Default)]
 pub struct Iss {
     pub lat: f64,
@@ -63,22 +65,13 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Erro
     let latitude = lat;
     let longitude =lon;
 
-    // https://nominatim.openstreetmap.org/reverse?lat=42.90&lon=-130.416667&format=json
-    // Construct API Request
-    let concatenated_address: String = String::from("https://nominatim.openstreetmap.org/reverse?lat=") + latitude.to_string().as_str() + "&lon=" + longitude.to_string().as_str() + "&format=json";
+    let rgeo_result = search(latitude as f32, longitude as f32).unwrap();
 
-    let mut res = reqwest::blocking::get(concatenated_address)?;
-    let mut body = String::new();
-    res.read_to_string(&mut body)?;
+    let flag = flag(rgeo_result.1.country.as_str()).unwrap();
 
-    let json: Value = match serde_json::from_str(&body) {
-        Ok(json) => json,
-        Err(err) => return Err(Box::new(err)),
-    };
+    let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
 
-    let country= json["address"]["country"].to_string();
-
-    Ok(country)
+    Ok(countryString)
 
 
 }
