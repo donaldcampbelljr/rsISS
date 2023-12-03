@@ -267,6 +267,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "error-chain"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d2f06b9cac1506ece98fe3231e3cc9c4410ec3d5b1f24ae1c8946f0742cdefc"
+dependencies = [
+ "backtrace",
+ "version_check",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -927,6 +937,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rs_OrbitalEphemerisMessages"
+version = "0.1.0"
+dependencies = [
+ "error-chain",
+ "reqwest",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "rs_iss"
 version = "0.1.0"
 dependencies = [
@@ -936,6 +956,7 @@ dependencies = [
  "ratatui",
  "reqwest",
  "rgeo",
+ "rs_OrbitalEphemerisMessages",
  "serde_json",
 ]
 
@@ -1229,9 +1250,23 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
+ "parking_lot",
  "pin-project-lite",
+ "signal-hook-registry",
  "socket2 0.5.5",
+ "tokio-macros",
  "windows-sys",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b8a1e28f2deaa14e508979454cb3a223b10b938b45af148bc0986de36f1923b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

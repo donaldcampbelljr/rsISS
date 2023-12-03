@@ -3,6 +3,7 @@ use crate::iss::Iss;
 use ratatui::{prelude::*, widgets::*};
 use ratatui::widgets::canvas::{MapResolution, Painter, Shape, Canvas, Map};
 use chrono::prelude::*;
+use ratatui::layout::Direction::{Horizontal, Vertical};
 
 pub mod iss;
 
@@ -17,6 +18,20 @@ pub mod iss;
 // ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let url = rs_OrbitalEphemerisMessages::ISS_OEM_URL;
+    let content: Result<String, rs_OrbitalEphemerisMessages::Error> = rs_OrbitalEphemerisMessages::download_file(url);
+
+    let sat = match content {
+        Ok(content) => rs_OrbitalEphemerisMessages::construct_oem(&content),
+        Err(error) => {
+            println!("Error downloading content: {}", error);
+            // Return a default Satellite value if there was an error
+            rs_OrbitalEphemerisMessages::Satellite::default()
+        }
+    };
+
+
     let mut iss = Iss::new();
     iss.update_position();
 
@@ -41,9 +56,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([
-                    Constraint::Ratio(1, 9),
-                    Constraint::Ratio(3, 9),
-                    Constraint::Ratio(5, 9),
+                    Constraint::Ratio(3, 24),
+                    Constraint::Ratio(9, 24),
+                    Constraint::Ratio(12, 24),
                 ])
                 .split(size);
             let datasets2 = vec![Dataset::default()
@@ -53,21 +68,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .graph_type(GraphType::Line)
                 .data(iss.pos_data.as_slice())];
             f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
-            f.render_widget(Chart::new(datasets2.clone())
-                                .block(           Block::default()
-                                                      .title("ISS Historical Position".cyan().bold())
-                                                      .borders(Borders::ALL),)
-                                .x_axis(            Axis::default()
-                                                        .title("Lat")
-                                                        .style(Style::default().fg(Color::Gray))
-                                                        .bounds([-180.0, 180.0])
-                                                        .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
-                                .y_axis(            Axis::default()
-                                                        .title("Lon")
-                                                        .style(Style::default().fg(Color::Gray))
-                                                        .bounds([-180.0, 180.0])
-                                                        .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
-            f.render_widget(Paragraph::new(format!("ISS TRACKER\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)), chunks[0]);
+            // f.render_widget(Chart::new(datasets2.clone())
+            //                     .block(           Block::default()
+            //                                           .title("ISS Historical Position".cyan().bold())
+            //                                           .borders(Borders::ALL),)
+            //                     .x_axis(            Axis::default()
+            //                                             .title("Lat")
+            //                                             .style(Style::default().fg(Color::Gray))
+            //                                             .bounds([-180.0, 180.0])
+            //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
+            //                     .y_axis(            Axis::default()
+            //                                             .title("Lon")
+            //                                             .style(Style::default().fg(Color::Gray))
+            //                                             .bounds([-180.0, 180.0])
+            //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
+            f.render_widget(Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold())), chunks[1]);
+            f.render_widget(Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold())), chunks[0]);
         })?;
 
         // Check for user input every 250 milliseconds

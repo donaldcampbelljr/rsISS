@@ -13,3 +13,4 @@ reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde_json = { version = "1.0.107" }
 rgeo = {git ="https://github.com/etrombly/rgeo.git"}
 country-emoji = "0.2.0"
+rs_OrbitalEphemerisMessages = { path = "../rs-OrbitalEphemerisMessages" }
