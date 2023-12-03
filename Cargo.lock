@@ -3,6 +3,17 @@
 version = 3
 
 [[package]]
+name = "OrbitalEphemerisMessage"
+version = "0.1.0"
+source = "git+https://github.com/donaldcampbelljr/OrbitalEphemerisMessage.git#2333bfee74120090346d8f1c59d4589c22ed5aac"
+dependencies = [
+ "error-chain",
+ "reqwest",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -937,26 +948,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "rs_OrbitalEphemerisMessages"
-version = "0.1.0"
-dependencies = [
- "error-chain",
- "reqwest",
- "tempfile",
- "tokio",
-]
-
-[[package]]
 name = "rs_iss"
 version = "0.1.0"
 dependencies = [
+ "OrbitalEphemerisMessage",
  "chrono",
  "country-emoji",
  "crossterm",
  "ratatui",
  "reqwest",
  "rgeo",
- "rs_OrbitalEphemerisMessages",
  "serde_json",
 ]
 

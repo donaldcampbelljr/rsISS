@@ -19,15 +19,15 @@ pub mod iss;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let url = rs_OrbitalEphemerisMessages::ISS_OEM_URL;
-    let content: Result<String, rs_OrbitalEphemerisMessages::Error> = rs_OrbitalEphemerisMessages::download_file(url);
+    let url = OrbitalEphemerisMessage::ISS_OEM_URL;
+    let content: Result<String, OrbitalEphemerisMessage::Error> = OrbitalEphemerisMessage::download_file(url);
 
     let sat = match content {
-        Ok(content) => rs_OrbitalEphemerisMessages::construct_oem(&content),
+        Ok(content) => OrbitalEphemerisMessage::construct_oem(&content),
         Err(error) => {
             println!("Error downloading content: {}", error);
             // Return a default Satellite value if there was an error
-            rs_OrbitalEphemerisMessages::Satellite::default()
+            OrbitalEphemerisMessage::Satellite::default()
         }
     };
 
