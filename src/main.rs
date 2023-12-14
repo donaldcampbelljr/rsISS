@@ -15,6 +15,7 @@ use ratatui::widgets::canvas::{MapResolution, Painter, Shape, Canvas, Map};
 use chrono::prelude::*;
 use ratatui::layout::Direction::{Horizontal, Vertical};
 use std::{error::Error, io};
+use chrono::Duration;
 use OrbitalEphemerisMessage::Satellite;
 
 pub mod iss;
@@ -30,6 +31,8 @@ pub mod iss;
 // ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let start_time: DateTime<Local> = Local::now();
 
     let url = OrbitalEphemerisMessage::ISS_OEM_URL;
     let content: Result<String, OrbitalEphemerisMessage::Error> = OrbitalEphemerisMessage::download_file(url);
@@ -56,7 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat);
+    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat, start_time);
 
     disable_raw_mode()?;
     execute!(
@@ -90,14 +93,16 @@ fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
         .x_bounds([lon-zoom, lon+zoom])
         .y_bounds([lat-zoom, lat+zoom])
 }
-pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
-          sat: &mut Satellite, zoom: f64) {
+pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
+          sat: &mut Satellite, zoom: f64,
+          elapsed_time: Duration) {
 
     let utc: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
     let local: DateTime<Local> = Local::now();
     // Create the layout sections.
     let chunks = Layout::default()
         .direction(Direction::Vertical)
+        .margin(1)
         .constraints([
             Constraint::Length(3),
             Constraint::Min(1),
@@ -105,23 +110,48 @@ pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
         ])
         .split(f.size());
 
+    let inner_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![
+            Constraint::Percentage(30),
+            Constraint::Percentage(70),
+        ])
+        .split(chunks[1]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
 
-    let mut content = "rsISS";
+    let footer_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default().bg(Color::DarkGray));
+
+    let title_content = "rsISS";
 
     let title = Paragraph::new(Text::styled(
-        content,
+        title_content,
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
     ))
         .block(title_block);
 
     f.render_widget(title, chunks[0]);
 
+    let footer_content = format!("CURRENT RUN TIME: {0}", elapsed_time);
+
+    let footer = Paragraph::new(Text::styled(
+        footer_content,
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+    ))
+        .block(footer_block);
+
+    f.render_widget(footer, chunks[2]);
+
+
     let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
     let widget2 = Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
     let widget3 = map_canvas(&iss.lat, &iss.lon, &zoom);
+
+    //let widget_time = Paragraph::new(format!("CURRENT RUN TIME: {0}", elapsed_time)).block(Block::default().borders(Borders::ALL).bg(Color::DarkGray));
 
     //     let datasets2 = vec![Dataset::default()
     //         .name("pos")
@@ -146,11 +176,12 @@ pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
     //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
 
     let current_widget= match app.current_screen {
-        CurrentScreen::Main => {
+        CurrentScreen::OEM => {
             f.render_widget(widget1, chunks[1]);
         },
         CurrentScreen::Secondary => {
-            f.render_widget(widget2, chunks[1])
+            f.render_widget(widget2, inner_layout[0]);
+            f.render_widget(widget3, inner_layout[1])
         },
 
         CurrentScreen::Map => {
@@ -184,7 +215,7 @@ pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
 }
 
 pub enum CurrentScreen {
-    Main,
+    OEM,
     Secondary,
     Map,
     Exiting,
@@ -197,7 +228,7 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
-            current_screen: CurrentScreen::Main,
+            current_screen: CurrentScreen::OEM,
         }
     }
 }
@@ -207,11 +238,15 @@ fn run_app<B: Backend>(
     app: &mut App,
     iss: &mut Iss,
     sat: &mut Satellite,
+    start_time: DateTime<Local>,
 ) -> io::Result<bool> {
     let mut zoom = 50.0;
     let mut duration = 0;
     loop {
-        terminal.draw(|f| ui(f, app, iss, sat, zoom))?;
+
+        let elapsed_time:Duration = Local::now()-start_time;
+
+        terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time))?;
 
         if crossterm::event::poll(std::time::Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
@@ -220,7 +255,7 @@ fn run_app<B: Backend>(
                     continue;
                 }
                 match app.current_screen {
-                    CurrentScreen::Main => match key.code {
+                    CurrentScreen::OEM => match key.code {
                         KeyCode::Char('l') => {
                             app.current_screen = CurrentScreen::Secondary;
                         }
@@ -246,7 +281,7 @@ fn run_app<B: Backend>(
                     },
                     CurrentScreen::Map => match key.code {
                         KeyCode::Char('l') => {
-                            app.current_screen = CurrentScreen::Main;
+                            app.current_screen = CurrentScreen::OEM;
                         }
                         KeyCode::Char('q') => {
                             app.current_screen = CurrentScreen::Exiting;
