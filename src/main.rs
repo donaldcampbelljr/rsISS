@@ -57,72 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut app = App::new();
     let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat);
-    // Main application loop
-    // loop {
-    //     let utc: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
-    //     let local: DateTime<Local> = Local::now();
-        // Render the UI
-        // terminal.draw(|f| {
-        //     let size = f.size();
-        //     let chunks = Layout::default()
-        //         .direction(Direction::Horizontal)
-        //         .constraints([
-        //             Constraint::Ratio(3, 24),
-        //             Constraint::Ratio(9, 24),
-        //             Constraint::Ratio(12, 24),
-        //         ])
-        //         .split(size);
-        //     let datasets2 = vec![Dataset::default()
-        //         .name("pos")
-        //         .marker(symbols::Marker::Dot)
-        //         .style(Style::default().fg(Color::Yellow))
-        //         .graph_type(GraphType::Line)
-        //         .data(iss.pos_data.as_slice())];
-        //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
-        //     // f.render_widget(Chart::new(datasets2.clone())
-        //     //                     .block(           Block::default()
-        //     //                                           .title("ISS Historical Position".cyan().bold())
-        //     //                                           .borders(Borders::ALL),)
-        //     //                     .x_axis(            Axis::default()
-        //     //                                             .title("Lat")
-        //     //                                             .style(Style::default().fg(Color::Gray))
-        //     //                                             .bounds([-180.0, 180.0])
-        //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
-        //     //                     .y_axis(            Axis::default()
-        //     //                                             .title("Lon")
-        //     //                                             .style(Style::default().fg(Color::Gray))
-        //     //                                             .bounds([-180.0, 180.0])
-        //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
-        //     f.render_widget(Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold())), chunks[1]);
-        //     f.render_widget(Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold())), chunks[0]);
-        // })?;
 
-    //     // Check for user input every 250 milliseconds
-    //     if crossterm::event::poll(std::time::Duration::from_millis(250))? {
-    //         // If a key event occurs, handle it
-    //         if let crossterm::event::Event::Key(key) = crossterm::event::read()? {
-    //             if key.kind == crossterm::event::KeyEventKind::Press {
-    //                 match key.code {
-    //                     crossterm::event::KeyCode::Char('j') => counter += 1,
-    //                     crossterm::event::KeyCode::Char('k') => counter -= 1,
-    //                     crossterm::event::KeyCode::Char('u') => iss.update_position(),
-    //                     crossterm::event::KeyCode::Char(']') => zoom-=10.0,
-    //                     crossterm::event::KeyCode::Char('[') => zoom+=10.0,
-    //                     crossterm::event::KeyCode::Char('q') => break,
-    //                     _ => {},
-    //                 }
-    //             }
-    //         }
-    //     } else{
-    //         duration += 250;
-    //
-    //         if duration >= 5500{
-    //             iss.update_position();
-    //             duration = 0;
-    //         }
-    //     }
-    // }
-    // restore terminal
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
@@ -132,15 +67,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     terminal.show_cursor()?;
 
     Ok(())
-    // // shutdown down: reset terminal back to original state
-    // crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen)?;
-    // crossterm::terminal::disable_raw_mode()?;
-    //
-    // Ok(())
 
 }
 
-fn map_canvas(&lat: &f64,&lon: &f64, zoom: &f64) -> impl Widget + 'static {
+fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
     Canvas::default()
         .block(Block::default().borders(Borders::ALL).title("Current ISS Position".cyan().bold()))
         .marker(Marker::Braille)
@@ -148,9 +78,14 @@ fn map_canvas(&lat: &f64,&lon: &f64, zoom: &f64) -> impl Widget + 'static {
             ctx.draw(&Map {
                 color: Color::Yellow,
                 resolution: MapResolution::High,
-
             });
             ctx.print(lon, lat, "ISS".red().add_modifier(Modifier::BOLD)); //Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+            // for i in 0..5 {
+            //     ctx.print(lon+2.0+(i as f64), lat+2.0+(i as f64), "-".green().add_modifier(Modifier::BOLD));
+            // }
+            // for (x,y) in hist_pos {
+            //     ctx.print(lon+2.0+(x), lat+2.0+(y), "-".green().add_modifier(Modifier::BOLD));
+            // }
         })
         .x_bounds([lon-zoom, lon+zoom])
         .y_bounds([lat-zoom, lat+zoom])
@@ -172,7 +107,7 @@ pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
 
     let title_block = Block::default()
         .borders(Borders::ALL)
-        .style(Style::default());
+        .style(Style::default().bg(Color::DarkGray));
 
     let mut content = "rsISS";
 
@@ -187,6 +122,28 @@ pub fn ui(f: &mut Frame, app: &App,iss: &mut Iss,
     let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
     let widget2 = Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
     let widget3 = map_canvas(&iss.lat, &iss.lon, &zoom);
+
+    //     let datasets2 = vec![Dataset::default()
+    //         .name("pos")
+    //         .marker(symbols::Marker::Dot)
+    //         .style(Style::default().fg(Color::Yellow))
+    //         .graph_type(GraphType::Line)
+    //         .data(iss.pos_data.as_slice())];
+    //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
+    //     // f.render_widget(Chart::new(datasets2.clone())
+    //     //                     .block(           Block::default()
+    //     //                                           .title("ISS Historical Position".cyan().bold())
+    //     //                                           .borders(Borders::ALL),)
+    //     //                     .x_axis(            Axis::default()
+    //     //                                             .title("Lat")
+    //     //                                             .style(Style::default().fg(Color::Gray))
+    //     //                                             .bounds([-180.0, 180.0])
+    //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
+    //     //                     .y_axis(            Axis::default()
+    //     //                                             .title("Lon")
+    //     //                                             .style(Style::default().fg(Color::Gray))
+    //     //                                             .bounds([-180.0, 180.0])
+    //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
 
     let current_widget= match app.current_screen {
         CurrentScreen::Main => {
@@ -232,10 +189,6 @@ pub enum CurrentScreen {
     Map,
     Exiting,
 }
-// enum Internal_Widget {
-//     Paragraph(Paragraph),
-//     Map(map_canvas), // Replace Widget with the actual type returned by `map_canvas`
-// }
 
 pub struct App {
     pub current_screen: CurrentScreen, // the current screen the user is looking at, and will later determine what is rendered
