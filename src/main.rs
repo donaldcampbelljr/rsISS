@@ -18,6 +18,7 @@ use std::{error::Error, io};
 use chrono::Duration;
 use OrbitalEphemerisMessage::Satellite;
 
+
 pub mod iss;
 
 // const ISS_DATA: [(f64, f64); 7] = [
@@ -46,6 +47,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
+    let zipped_coords = sat.x_coord_vec.iter().zip(sat.y_coord_vec.iter());
+    let future_coords: Vec<(f64, f64)> = zipped_coords.map(|(&x, &y)| (x, y)).collect();
+
 
     let mut iss = Iss::new();
     iss.update_position();
@@ -59,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat, start_time);
+    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat, start_time, future_coords);
 
     disable_raw_mode()?;
     execute!(
@@ -95,7 +99,7 @@ fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
 }
 pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
           sat: &mut Satellite, zoom: f64,
-          elapsed_time: Duration) {
+          elapsed_time: Duration, future_coords: Vec<(f64,f64)>,) {
 
     let utc: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
     let local: DateTime<Local> = Local::now();
@@ -163,27 +167,43 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
     let coordinates_widget = Paragraph::new(format!("{0}", sat.coordinates)).block(Block::default().borders(Borders::ALL).title("Future Trajectories".cyan().bold()));
     //let widget_time = Paragraph::new(format!("CURRENT RUN TIME: {0}", elapsed_time)).block(Block::default().borders(Borders::ALL).bg(Color::DarkGray));
 
-    // let datasets2 = vec![Dataset::default()
-    //     .name("pos")
-    //     .marker(symbols::Marker::Dot)
-    //     .style(Style::default().fg(Color::Yellow))
-    //     .graph_type(GraphType::Line)
-    //     .data(sat.coordinates.as_slice())];
+    let future_coords_datasets = vec![Dataset::default()
+        .name("pos")
+        .marker(symbols::Marker::Dot)
+        .style(Style::default().fg(Color::Yellow))
+        .graph_type(GraphType::Line)
+        .data(future_coords.as_slice())];
+
+    let future_coordinates_widget = Chart::new(future_coords_datasets.clone())
+        .block(           Block::default()
+                              .title("ISS Historical Position".cyan().bold())
+                              .borders(Borders::ALL),)
+        .x_axis(            Axis::default()
+                                .title("Lat")
+                                .style(Style::default().fg(Color::Gray))
+                                .bounds([-180.0, 180.0])
+                                .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
+        .y_axis(            Axis::default()
+                                .title("Lon")
+                                .style(Style::default().fg(Color::Gray))
+                                .bounds([-180.0, 180.0])
+                                .labels(vec!["-180".bold(), "0".into(), "180".bold()]));
+
     //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
-    //     // f.render_widget(Chart::new(datasets2.clone())
-    //     //                     .block(           Block::default()
-    //     //                                           .title("ISS Historical Position".cyan().bold())
-    //     //                                           .borders(Borders::ALL),)
-    //     //                     .x_axis(            Axis::default()
-    //     //                                             .title("Lat")
-    //     //                                             .style(Style::default().fg(Color::Gray))
-    //     //                                             .bounds([-180.0, 180.0])
-    //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
-    //     //                     .y_axis(            Axis::default()
-    //     //                                             .title("Lon")
-    //     //                                             .style(Style::default().fg(Color::Gray))
-    //     //                                             .bounds([-180.0, 180.0])
-    //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
+    //     f.render_widget(Chart::new(datasets2.clone())
+    //                         .block(           Block::default()
+    //                                               .title("ISS Historical Position".cyan().bold())
+    //                                               .borders(Borders::ALL),)
+    //                         .x_axis(            Axis::default()
+    //                                                 .title("Lat")
+    //                                                 .style(Style::default().fg(Color::Gray))
+    //                                                 .bounds([-180.0, 180.0])
+    //                                                 .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
+    //                         .y_axis(            Axis::default()
+    //                                                 .title("Lon")
+    //                                                 .style(Style::default().fg(Color::Gray))
+    //                                                 .bounds([-180.0, 180.0])
+    //                                                 .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
 
     let current_widget= match app.current_screen {
         CurrentScreen::Tracker => {
@@ -251,6 +271,7 @@ fn run_app<B: Backend>(
     iss: &mut Iss,
     sat: &mut Satellite,
     start_time: DateTime<Local>,
+    future_coords: Vec<(f64,f64)>,
 ) -> io::Result<bool> {
     let mut zoom = 50.0;
     let mut duration = 0;
@@ -258,7 +279,7 @@ fn run_app<B: Backend>(
 
         let elapsed_time:Duration = Local::now()-start_time;
 
-        terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time))?;
+        terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time, future_coords.clone()))?;
 
         if crossterm::event::poll(std::time::Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
