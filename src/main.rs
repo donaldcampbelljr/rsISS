@@ -47,6 +47,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
+    let min_x = sat.x_coord_vec.iter().fold(f64::INFINITY, |acc, &num| acc.min(num));
+    let max_x = sat.x_coord_vec.iter().fold(f64::NEG_INFINITY, |acc, &num| acc.max(num));
+
+    let min_y = sat.y_coord_vec.iter().fold(f64::INFINITY, |acc, &num| acc.min(num));
+    let max_y = sat.y_coord_vec.iter().fold(f64::NEG_INFINITY, |acc, &num| acc.max(num));
+
     let zipped_coords = sat.x_coord_vec.iter().zip(sat.y_coord_vec.iter());
     let future_coords: Vec<(f64, f64)> = zipped_coords.map(|(&x, &y)| (x, y)).collect();
 
@@ -63,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat, start_time, future_coords);
+    let res = run_app(&mut terminal, &mut app, &mut iss, &mut sat, start_time, future_coords, min_x, max_x, min_y, max_y);
 
     disable_raw_mode()?;
     execute!(
@@ -99,7 +105,10 @@ fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
 }
 pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
           sat: &mut Satellite, zoom: f64,
-          elapsed_time: Duration, future_coords: Vec<(f64,f64)>,) {
+          elapsed_time: Duration, future_coords: Vec<(f64,f64)>,    min_x: f64,
+          max_x: f64,
+          min_y: f64,
+          max_y: f64,) {
 
     let utc: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
     let local: DateTime<Local> = Local::now();
@@ -176,17 +185,17 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 
     let future_coordinates_widget = Chart::new(future_coords_datasets.clone())
         .block(           Block::default()
-                              .title("ISS Historical Position".cyan().bold())
+                              .title("ISS Future Coordinates".cyan().bold())
                               .borders(Borders::ALL),)
         .x_axis(            Axis::default()
                                 .title("Lat")
                                 .style(Style::default().fg(Color::Gray))
-                                .bounds([-180.0, 180.0])
+                                .bounds([min_x, max_x])
                                 .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
         .y_axis(            Axis::default()
                                 .title("Lon")
                                 .style(Style::default().fg(Color::Gray))
-                                .bounds([-180.0, 180.0])
+                                .bounds([min_y, max_y])
                                 .labels(vec!["-180".bold(), "0".into(), "180".bold()]));
 
     //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
@@ -216,6 +225,10 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 
         CurrentScreen::UpcomingEvents => {
             f.render_widget(trajectory_widget, inner_layout2[0]);
+            f.render_widget(coordinates_widget, inner_layout2[1])
+        },
+        CurrentScreen::Charts => {
+            f.render_widget(future_coordinates_widget, inner_layout2[0]);
             f.render_widget(coordinates_widget, inner_layout2[1])
         },
 
@@ -250,6 +263,7 @@ pub enum CurrentScreen {
     Tracker,
     FullMap,
     UpcomingEvents,
+    Charts,
     Exiting,
 }
 
@@ -272,6 +286,10 @@ fn run_app<B: Backend>(
     sat: &mut Satellite,
     start_time: DateTime<Local>,
     future_coords: Vec<(f64,f64)>,
+    min_x: f64,
+    max_x: f64,
+    min_y: f64,
+    max_y: f64,
 ) -> io::Result<bool> {
     let mut zoom = 50.0;
     let mut duration = 0;
@@ -279,7 +297,7 @@ fn run_app<B: Backend>(
 
         let elapsed_time:Duration = Local::now()-start_time;
 
-        terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time, future_coords.clone()))?;
+        terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time, future_coords.clone(), min_x,max_x,min_y, max_y))?;
 
         if crossterm::event::poll(std::time::Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
@@ -325,6 +343,19 @@ fn run_app<B: Backend>(
                         _ => {}
                     },
                     CurrentScreen::UpcomingEvents => match key.code {
+                        KeyCode::Char('l') => {
+                            app.current_screen = CurrentScreen::Charts;
+                        }
+                        KeyCode::Char('q') => {
+                            app.current_screen = CurrentScreen::Exiting;
+                        }
+                        KeyCode::Char('u') => {
+                            iss.update_position();
+                        }
+                        _ => {}
+                    },
+
+                    CurrentScreen::Charts => match key.code {
                         KeyCode::Char('l') => {
                             app.current_screen = CurrentScreen::Tracker;
                         }
