@@ -118,6 +118,14 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
         ])
         .split(chunks[1]);
 
+    let inner_layout2 = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![
+            Constraint::Percentage(60),
+            Constraint::Percentage(40),
+        ])
+        .split(chunks[1]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
@@ -147,18 +155,20 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
     f.render_widget(footer, chunks[2]);
 
 
-    let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
-    let widget2 = Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
-    let widget3 = map_canvas(&iss.lat, &iss.lon, &zoom);
-
+    //let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
+    let tracking_widget = Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
+    let map_widget = map_canvas(&iss.lat, &iss.lon, &zoom);
+    //let widget4 = Paragraph::new(format!("{0}", sat.meta_summary)).block(Block::default().borders(Borders::ALL).title("Upcoming Events".cyan().bold()));
+    let trajectory_widget = Paragraph::new(format!("{0}", sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("Upcoming".cyan().bold()));
+    let coordinates_widget = Paragraph::new(format!("{0}", sat.coordinates)).block(Block::default().borders(Borders::ALL).title("Future Trajectories".cyan().bold()));
     //let widget_time = Paragraph::new(format!("CURRENT RUN TIME: {0}", elapsed_time)).block(Block::default().borders(Borders::ALL).bg(Color::DarkGray));
 
-    //     let datasets2 = vec![Dataset::default()
-    //         .name("pos")
-    //         .marker(symbols::Marker::Dot)
-    //         .style(Style::default().fg(Color::Yellow))
-    //         .graph_type(GraphType::Line)
-    //         .data(iss.pos_data.as_slice())];
+    // let datasets2 = vec![Dataset::default()
+    //     .name("pos")
+    //     .marker(symbols::Marker::Dot)
+    //     .style(Style::default().fg(Color::Yellow))
+    //     .graph_type(GraphType::Line)
+    //     .data(sat.coordinates.as_slice())];
     //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
     //     // f.render_widget(Chart::new(datasets2.clone())
     //     //                     .block(           Block::default()
@@ -176,18 +186,20 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
     //     //                                             .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
 
     let current_widget= match app.current_screen {
-        CurrentScreen::OEM => {
-            f.render_widget(widget1, chunks[1]);
+        CurrentScreen::Tracker => {
+            f.render_widget(tracking_widget, inner_layout[0]);
+            f.render_widget(map_widget, inner_layout[1])
         },
-        CurrentScreen::Secondary => {
-            f.render_widget(widget2, inner_layout[0]);
-            f.render_widget(widget3, inner_layout[1])
+        CurrentScreen::FullMap => {
+            f.render_widget(map_widget, chunks[1]);
         },
 
-        CurrentScreen::Map => {
-            f.render_widget(widget3, chunks[1])},
+        CurrentScreen::UpcomingEvents => {
+            f.render_widget(trajectory_widget, inner_layout2[0]);
+            f.render_widget(coordinates_widget, inner_layout2[1])
+        },
 
-        _ => f.render_widget(widget1, chunks[1]),
+        _ => f.render_widget(tracking_widget, chunks[1]),
     };
 
 
@@ -215,9 +227,9 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 }
 
 pub enum CurrentScreen {
-    OEM,
-    Secondary,
-    Map,
+    Tracker,
+    FullMap,
+    UpcomingEvents,
     Exiting,
 }
 
@@ -228,7 +240,7 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
-            current_screen: CurrentScreen::OEM,
+            current_screen: CurrentScreen::Tracker,
         }
     }
 }
@@ -255,33 +267,9 @@ fn run_app<B: Backend>(
                     continue;
                 }
                 match app.current_screen {
-                    CurrentScreen::OEM => match key.code {
+                    CurrentScreen::Tracker => match key.code {
                         KeyCode::Char('l') => {
-                            app.current_screen = CurrentScreen::Secondary;
-                        }
-                        KeyCode::Char('q') => {
-                            app.current_screen = CurrentScreen::Exiting;
-                        }
-                        KeyCode::Char('u') => {
-                            iss.update_position();
-                        }
-                        _ => {}
-                    },
-                    CurrentScreen::Secondary => match key.code {
-                        KeyCode::Char('l') => {
-                            app.current_screen = CurrentScreen::Map;
-                        }
-                        KeyCode::Char('q') => {
-                            app.current_screen = CurrentScreen::Exiting;
-                        }
-                        KeyCode::Char('u') => {
-                            iss.update_position();
-                        }
-                        _ => {}
-                    },
-                    CurrentScreen::Map => match key.code {
-                        KeyCode::Char('l') => {
-                            app.current_screen = CurrentScreen::OEM;
+                            app.current_screen = CurrentScreen::FullMap;
                         }
                         KeyCode::Char('q') => {
                             app.current_screen = CurrentScreen::Exiting;
@@ -297,6 +285,37 @@ fn run_app<B: Backend>(
                         }
                         _ => {}
                     },
+                    CurrentScreen::FullMap => match key.code {
+                        KeyCode::Char('l') => {
+                            app.current_screen = CurrentScreen::UpcomingEvents;
+                        }
+                        KeyCode::Char('q') => {
+                            app.current_screen = CurrentScreen::Exiting;
+                        }
+                        KeyCode::Char('u') => {
+                            iss.update_position();
+                        }
+                        KeyCode::Char(']') => {
+                            zoom -= 10.0;
+                        }
+                        KeyCode::Char('[') => {
+                            zoom += 10.0;
+                        }
+                        _ => {}
+                    },
+                    CurrentScreen::UpcomingEvents => match key.code {
+                        KeyCode::Char('l') => {
+                            app.current_screen = CurrentScreen::Tracker;
+                        }
+                        KeyCode::Char('q') => {
+                            app.current_screen = CurrentScreen::Exiting;
+                        }
+                        KeyCode::Char('u') => {
+                            iss.update_position();
+                        }
+                        _ => {}
+                    },
+
                     CurrentScreen::Exiting => match key.code {
                         KeyCode::Char('y') => {
                             return Ok(true);
