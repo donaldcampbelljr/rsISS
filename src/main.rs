@@ -183,20 +183,25 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
         .graph_type(GraphType::Line)
         .data(future_coords.as_slice())];
 
+    let minx_string = format!("{}", min_x);
+    let maxx_string = format!("{}", max_x);
+    let miny_string = format!("{}", min_y);
+    let maxy_string = format!("{}", max_y);
+
     let future_coordinates_widget = Chart::new(future_coords_datasets.clone())
         .block(           Block::default()
                               .title("ISS Future Coordinates".cyan().bold())
                               .borders(Borders::ALL),)
         .x_axis(            Axis::default()
-                                .title("Lat")
+                                .title("X Coordinate (km)")
                                 .style(Style::default().fg(Color::Gray))
                                 .bounds([min_x, max_x])
-                                .labels(vec!["-180".bold(), "0".into(), "180".bold()]),)
+                                .labels(vec![minx_string.bold(), "0".into(), maxx_string.bold()]),)
         .y_axis(            Axis::default()
-                                .title("Lon")
+                                .title("Y Coordinate (km)")
                                 .style(Style::default().fg(Color::Gray))
                                 .bounds([min_y, max_y])
-                                .labels(vec!["-180".bold(), "0".into(), "180".bold()]));
+                                .labels(vec![miny_string.bold(), "0".into(), maxy_string.bold()]));
 
     //     f.render_widget(map_canvas(&iss.lat, &iss.lon, &zoom),chunks[2]);
     //     f.render_widget(Chart::new(datasets2.clone())
