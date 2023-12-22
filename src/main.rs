@@ -17,6 +17,10 @@ use ratatui::layout::Direction::{Horizontal, Vertical};
 use std::{error::Error, io};
 use chrono::Duration;
 use OrbitalEphemerisMessage::Satellite;
+use astro::coords::{EqPoint,GeographPoint};
+use coord_transforms::geo::{ecef2lla, lla2ecef};
+use coord_transforms::prelude::geo_ellipsoid;
+use nalgebra::base::Vector3;
 
 
 pub mod iss;
@@ -47,6 +51,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
+
+    // Get min, max and then zip so that they can be plotted appropriately.
     let min_x = sat.x_coord_vec.iter().fold(f64::INFINITY, |acc, &num| acc.min(num));
     let max_x = sat.x_coord_vec.iter().fold(f64::NEG_INFINITY, |acc, &num| acc.max(num));
 
@@ -56,6 +62,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let zipped_coords = sat.x_coord_vec.iter().zip(sat.y_coord_vec.iter());
     let future_coords: Vec<(f64, f64)> = zipped_coords.map(|(&x, &y)| (x, y)).collect();
 
+    // I'd like to transform to lat, long but this doesn't seem to convert properly...
+    // let vector3: Vector3<f64> = Vector3::new( 5823.6989 , 967.3103,  -3370.5261); // Access first elements
+    // let vector3_ref: &Vector3<f64> = &vector3;
+    // let ellipsoid = geo_ellipsoid::geo_ellipsoid::new(geo_ellipsoid::WGS84_SEMI_MAJOR_AXIS_METERS,
+    //                                                   geo_ellipsoid::WGS84_FLATTENING);
+    // let transformed = coord_transforms::geo::ecef2lla(vector3_ref, &ellipsoid);
+    //
+    // println!("{:?}", transformed);
+    //
+    // let transformed_coordinates: Vec<Vector3<f64>> = sat.x_coord_vec
+    //     .iter()
+    //     .zip(sat.y_coord_vec.iter())
+    //     .zip(sat.z_coord_vec.iter())
+    //     .map(|((x, y), z)| Vector3::new(*x, *y, *z))
+    //     .map(|vector3| coord_transforms::geo::ecef2lla(&vector3, &ellipsoid))
+    //     .collect();
+    //
+    // println!("{:?}",transformed_coordinates);
+    //
+    // let future_coords: Vec<(f64, f64)> = transformed_coordinates
+    //     .iter()
+    //     .map(|vector3| (vector3.x, vector3.y))
+    //     .collect();
+    //
+    // // Get min, max and then zip so that they can be plotted appropriately.
+    // let max_x = transformed_coordinates
+    //     .iter()
+    //     .map(|vector3| vector3.x)
+    //     .max_by(|a, b| a.partial_cmp(b).unwrap())
+    //     .unwrap();
+    //
+    // let min_x = transformed_coordinates
+    //     .iter()
+    //     .map(|vector3| vector3.x)
+    //     .min_by(|a, b| a.partial_cmp(b).unwrap())
+    //     .unwrap();
+    //
+    // let max_y = transformed_coordinates
+    //     .iter()
+    //     .map(|vector3| vector3.y)
+    //     .max_by(|a, b| a.partial_cmp(b).unwrap())
+    //     .unwrap();
+    //
+    // let min_y = transformed_coordinates
+    //     .iter()
+    //     .map(|vector3| vector3.y)
+    //     .min_by(|a, b| a.partial_cmp(b).unwrap())
+    //     .unwrap();
 
     let mut iss = Iss::new();
     iss.update_position();

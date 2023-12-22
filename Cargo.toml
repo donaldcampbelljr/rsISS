@@ -14,3 +14,6 @@ serde_json = { version = "1.0.107" }
 rgeo = {git ="https://github.com/etrombly/rgeo.git"}
 country-emoji = "0.2.0"
 OrbitalEphemerisMessage = { git="https://github.com/donaldcampbelljr/OrbitalEphemerisMessage.git" }
+astro = "2.0.0"
+coord_transforms = "1.4.0"
+nalgebra = "0.31.0"
