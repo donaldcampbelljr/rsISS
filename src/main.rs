@@ -193,6 +193,22 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
         ])
         .split(chunks[1]);
 
+    let footer_inner_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ])
+        .split(chunks[2]);
+
+    let title_inner_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![
+            Constraint::Percentage(80),
+            Constraint::Percentage(20),
+        ])
+        .split(chunks[0]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
@@ -213,13 +229,37 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 
     let footer_content = format!("CURRENT RUN TIME: {0}", elapsed_time);
 
+    let footer_instructions_content = format!("VIEWS: 'l' UPDATE: 'u' ZOOM: '[' ']'  QUIT: 'q'");
+
     let footer = Paragraph::new(Text::styled(
         footer_content,
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
     ))
         .block(footer_block);
 
-    f.render_widget(footer, chunks[2]);
+    f.render_widget(footer, footer_inner_layout[0]);
+
+    let footer_instructions = Paragraph::new(Text::styled(
+        footer_instructions_content,
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+    ))
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().bg(Color::DarkGray)));
+
+    f.render_widget(footer_instructions, footer_inner_layout[1]);
+
+
+    // let title_tabs_content = format!("TAB PLACEHOLDER");
+    //
+    // let title_tabs = Paragraph::new(Text::styled(
+    //     title_tabs_content,
+    //     Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+    // ))        .block(Block::default()
+    //     .borders(Borders::ALL)
+    //     .style(Style::default().bg(Color::Magenta)));
+    //
+    // f.render_widget(title_tabs, title_inner_layout[1]);
 
 
     //let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
