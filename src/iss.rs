@@ -11,6 +11,8 @@ pub struct Iss {
     pub time: f64,
     pub country: String,
     pub pos_data: Vec<(f64,f64)>,
+    pub prev_alt: f64,
+    pub alt_perigee_apogee: String,
 }
 
 impl Iss {
@@ -22,12 +24,32 @@ impl Iss {
     /// Set running to false to quit the application.
     pub fn update_position(&mut self) {
         let new_position = get_position().unwrap();
+        self.prev_alt = self.alt;
         self.lat = new_position.0;
         self.lon = new_position.1;
         self.alt = new_position.2;
         self.time = new_position.3;
         self.country = new_position.4;
         self.pos_data.push((new_position.0, new_position.1));
+        if self.prev_alt > self.alt
+        {
+            self.alt_perigee_apogee = String::from("Approaching Perigee");
+        }
+        else
+        {
+            self.alt_perigee_apogee = String::from("Approaching Apogee");
+        }
+
+        // these numbers are reported differently across the internet: 370-460 km as the altitude
+        // 413 and 422 reported as the perigee and apogee
+        if self.alt.floor() > 429.0 {
+            self.alt_perigee_apogee = String::from("Apogee Reached");
+        }
+
+        if self.alt.floor() < 372.0 {
+            self.alt_perigee_apogee = String::from("Perigee Reached");
+        }
+
     }
     // fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     //     write!(f, "ISS {{ latitude: {}, longitude: {} }}", self.lat, self.lon)

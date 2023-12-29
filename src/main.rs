@@ -112,6 +112,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .unwrap();
 
     let mut iss = Iss::new();
+    iss.alt = 417.5;
     iss.update_position();
 
     // startup: Enable raw mode for the terminal, giving us fine control over user input
@@ -263,7 +264,7 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 
 
     //let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
-    let tracking_widget = Paragraph::new(format!("\n  Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5}", iss.lat, iss.lon, iss.alt, utc, local, iss.country)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
+    let tracking_widget = Paragraph::new(format!("\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5} \n\n Additional Info: \n {6}", iss.lat, iss.lon, iss.alt, utc, local, iss.country, iss.alt_perigee_apogee)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
     let map_widget = map_canvas(&iss.lat, &iss.lon, &zoom);
     //let widget4 = Paragraph::new(format!("{0}", sat.meta_summary)).block(Block::default().borders(Borders::ALL).title("Upcoming Events".cyan().bold()));
     let trajectory_widget = Paragraph::new(format!("{0}", sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("Upcoming".cyan().bold()));
