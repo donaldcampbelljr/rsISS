@@ -1,6 +1,7 @@
 use std::io::Read;
 use serde_json::{Value};
 use rgeo::{search};
+use rgeo::record::{Nvec, Record};
 use country_emoji::{flag};
 #[derive(Debug,Default)]
 pub struct Iss {
@@ -65,9 +66,15 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Erro
     let latitude = lat;
     let longitude =lon;
 
-    let rgeo_result = search(latitude as f32, longitude as f32).unwrap();
+    let default_record = Record{
+        name: String::from("Unknown Location"),
+        nvec: Nvec::from_lat_long(0.0, 0.0),
+        country: String::from("Unknown Country"),
+    };
 
-    let flag = flag(rgeo_result.1.country.as_str()).unwrap();
+    let rgeo_result =  search(latitude as f32, longitude as f32).unwrap_or((0.0, &default_record));
+
+    let flag = flag(rgeo_result.1.country.as_str()).unwrap_or(String::from("Unknown Country"));
 
     let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
 
