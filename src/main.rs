@@ -62,57 +62,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let zipped_coords = sat.x_coord_vec.iter().zip(sat.y_coord_vec.iter());
     let future_coords: Vec<(f64, f64)> = zipped_coords.map(|(&x, &y)| (x, y)).collect();
 
-    // I'd like to transform to lat, long but this doesn't seem to convert properly...
-    // let vector3: Vector3<f64> = Vector3::new( 5823.6989 , 967.3103,  -3370.5261); // Access first elements
-    // let vector3_ref: &Vector3<f64> = &vector3;
-    // let ellipsoid = geo_ellipsoid::geo_ellipsoid::new(geo_ellipsoid::WGS84_SEMI_MAJOR_AXIS_METERS,
-    //                                                   geo_ellipsoid::WGS84_FLATTENING);
-    // let transformed = coord_transforms::geo::ecef2lla(vector3_ref, &ellipsoid);
-    //
-    // println!("{:?}", transformed);
-    //
-    // let transformed_coordinates: Vec<Vector3<f64>> = sat.x_coord_vec
-    //     .iter()
-    //     .zip(sat.y_coord_vec.iter())
-    //     .zip(sat.z_coord_vec.iter())
-    //     .map(|((x, y), z)| Vector3::new(*x, *y, *z))
-    //     .map(|vector3| coord_transforms::geo::ecef2lla(&vector3, &ellipsoid))
-    //     .collect();
-    //
-    // println!("{:?}",transformed_coordinates);
-    //
-    // let future_coords: Vec<(f64, f64)> = transformed_coordinates
-    //     .iter()
-    //     .map(|vector3| (vector3.x, vector3.y))
-    //     .collect();
-    //
-    // // Get min, max and then zip so that they can be plotted appropriately.
-    // let max_x = transformed_coordinates
-    //     .iter()
-    //     .map(|vector3| vector3.x)
-    //     .max_by(|a, b| a.partial_cmp(b).unwrap())
-    //     .unwrap();
-    //
-    // let min_x = transformed_coordinates
-    //     .iter()
-    //     .map(|vector3| vector3.x)
-    //     .min_by(|a, b| a.partial_cmp(b).unwrap())
-    //     .unwrap();
-    //
-    // let max_y = transformed_coordinates
-    //     .iter()
-    //     .map(|vector3| vector3.y)
-    //     .max_by(|a, b| a.partial_cmp(b).unwrap())
-    //     .unwrap();
-    //
-    // let min_y = transformed_coordinates
-    //     .iter()
-    //     .map(|vector3| vector3.y)
-    //     .min_by(|a, b| a.partial_cmp(b).unwrap())
-    //     .unwrap();
-
     let mut iss = Iss::new();
     iss.alt = 417.5;
+    iss.update_crew();
     iss.update_position();
 
     // startup: Enable raw mode for the terminal, giving us fine control over user input
@@ -314,6 +266,10 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
     //                                                 .bounds([-180.0, 180.0])
     //                                                 .labels(vec!["-180".bold(), "0".into(), "180".bold()]),), chunks[1]);
 
+
+    let crew_widget = Paragraph::new(format!("{0}", iss.crew)).block(Block::default().borders(Borders::ALL).title("Current ISS Crew".magenta().bold()));
+
+
     let current_widget= match app.current_screen {
         CurrentScreen::Tracker => {
             f.render_widget(tracking_widget, inner_layout[0]);
@@ -329,6 +285,10 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
         },
         CurrentScreen::Charts => {
             f.render_widget(future_coordinates_widget, inner_layout2[0]);
+            f.render_widget(coordinates_widget, inner_layout2[1])
+        },
+        CurrentScreen::Crew =>{
+            f.render_widget(crew_widget, inner_layout2[0]);
             f.render_widget(coordinates_widget, inner_layout2[1])
         },
 
@@ -364,6 +324,7 @@ pub enum CurrentScreen {
     FullMap,
     UpcomingEvents,
     Charts,
+    Crew,
     Exiting,
 }
 
@@ -456,6 +417,18 @@ fn run_app<B: Backend>(
                     },
 
                     CurrentScreen::Charts => match key.code {
+                        KeyCode::Char('l') => {
+                            app.current_screen = CurrentScreen::Crew;
+                        }
+                        KeyCode::Char('q') => {
+                            app.current_screen = CurrentScreen::Exiting;
+                        }
+                        KeyCode::Char('u') => {
+                            iss.update_position();
+                        }
+                        _ => {}
+                    },
+                    CurrentScreen::Crew => match key.code {
                         KeyCode::Char('l') => {
                             app.current_screen = CurrentScreen::Tracker;
                         }
