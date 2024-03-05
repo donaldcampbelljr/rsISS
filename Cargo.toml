@@ -6,14 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.31"
+chrono = "0.4.34"
 crossterm = "0.27.0"
 ratatui = { version = "0.24.0", features = ["all-widgets"] }
-reqwest = { version = "0.11", features = ["blocking", "json"] }
-serde_json = { version = "1.0.107" }
+reqwest = { version = "0.11.24", features = ["blocking", "json"] }
+serde_json = { version = "1.0.114" }
 rgeo = {git ="https://github.com/etrombly/rgeo.git"}
 country-emoji = "0.2.0"
 OrbitalEphemerisMessage = { git="https://github.com/donaldcampbelljr/OrbitalEphemerisMessage.git" }
 astro = "2.0.0"
 coord_transforms = "1.4.0"
-nalgebra = "0.31.0"
+nalgebra = "0.32.4"
