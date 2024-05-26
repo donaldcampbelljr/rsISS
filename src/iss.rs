@@ -25,7 +25,7 @@ impl Iss {
     pub fn update_crew(&mut self)
     {
         let current_crew = get_crew().unwrap();
-        self.crew = current_crew;
+        self.crew = current_crew.join("\n");
 
     }
 
@@ -113,7 +113,7 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Erro
 
 }
 
-pub fn get_crew() -> Result<(String), Box<dyn std::error::Error>> {
+pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let mut res = reqwest::blocking::get("http://api.open-notify.org/astros.json")?;
     let mut body = String::new();
     res.read_to_string(&mut body)?;
@@ -123,13 +123,15 @@ pub fn get_crew() -> Result<(String), Box<dyn std::error::Error>> {
         Err(err) => return Err(Box::new(err)),
     };
 
-    let crew_people = json["people"].as_str().unwrap();
+    //println!("{}", json["people"]);
 
-    let mut Crew = String::new();
+    let new_array = json["people"].as_array().unwrap();
 
-    //let Crew = "Crew1\nCrew2\nCrew3\nCrew5".to_string();
-    let Crew = crew_people.to_string();
+    let mut crew_member_list = Vec::new();
+    for val in new_array.into_iter(){
+        //println!("{}", val["name"]);
+        crew_member_list.push(val["name"].to_string());
+    }
 
-
-    Ok((Crew))
+    Ok((crew_member_list))
 }
