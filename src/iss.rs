@@ -13,12 +13,20 @@ pub struct Iss {
     pub pos_data: Vec<(f64,f64)>,
     pub prev_alt: f64,
     pub alt_perigee_apogee: String,
+    pub crew: String,
 }
 
 impl Iss {
     /// Constructs a new instance of [`Iss`].
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn update_crew(&mut self)
+    {
+        let current_crew = get_crew().unwrap();
+        self.crew = current_crew.join("\n");
+
     }
 
     /// Set running to false to quit the application.
@@ -103,4 +111,27 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Erro
     Ok(countryString)
 
 
+}
+
+pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let mut res = reqwest::blocking::get("http://api.open-notify.org/astros.json")?;
+    let mut body = String::new();
+    res.read_to_string(&mut body)?;
+
+    let json: Value = match serde_json::from_str(&body) {
+        Ok(json) => json,
+        Err(err) => return Err(Box::new(err)),
+    };
+
+    //println!("{}", json["people"]);
+
+    let new_array = json["people"].as_array().unwrap();
+
+    let mut crew_member_list = Vec::new();
+    for val in new_array.into_iter(){
+        //println!("{}", val["name"]);
+        crew_member_list.push(val["name"].to_string());
+    }
+
+    Ok((crew_member_list))
 }
