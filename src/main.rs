@@ -66,6 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     iss.alt = 417.5;
     iss.update_crew();
     iss.update_position();
+    iss.update_weather();
 
     // startup: Enable raw mode for the terminal, giving us fine control over user input
     crossterm::terminal::enable_raw_mode()?;
