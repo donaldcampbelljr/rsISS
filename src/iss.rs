@@ -4,6 +4,10 @@ use serde_json::{Value};
 use rgeo::{search};
 use rgeo::record::{Nvec, Record};
 use country_emoji::{flag};
+use std::string::String;
+use serde_json::Value::String as JsonString;
+
+
 #[derive(Debug,Default)]
 pub struct Iss {
     pub lat: f64,
@@ -153,7 +157,9 @@ pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Error>> {
 
 
-    let constructed_url = format!("https://api.weather.gov/points/{lat},{lon}").to_string();  //String::from_str("https://api.weather.gov/points/{lat},{lon}"); 
+    //let constructed_url = format!("https://api.weather.gov/points/{lat},{lon}").to_string();  //String::from_str("https://api.weather.gov/points/{lat},{lon}");
+
+    let constructed_url = format!("https://api.weather.gov/points/38.8894,-77.0352").to_string(); //basic example given on website
 
     let mut res = reqwest::blocking::get(constructed_url)?;
     let mut body = String::new();
