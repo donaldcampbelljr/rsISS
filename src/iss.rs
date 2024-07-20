@@ -41,7 +41,7 @@ impl Iss {
 
         let weather = get_weather(self.lat, self.lon).unwrap();
 
-        println!("{:?}", weather);
+        //println!("{:?}", weather);
 
         self.weather = weather;
 
@@ -159,7 +159,11 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
 
     //let constructed_url = format!("https://api.weather.gov/points/{lat},{lon}").to_string();  //String::from_str("https://api.weather.gov/points/{lat},{lon}");
 
-    let constructed_url = format!("https://api.weather.gov/points/38.8894,-77.0352").to_string(); //basic example given on website
+    //let constructed_url = format!("https://api.weather.gov/points/38.8894,-77.0352").to_string(); //basic example given on website
+
+    //let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature").to_string();
+
+    let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature").to_string();
 
     let mut res = reqwest::blocking::get(constructed_url)?;
     let mut body = String::new();
@@ -170,18 +174,18 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
         Err(err) => return Err(Box::new(err)),
     };
 
-    let new_url = json["properties"]["forecast"].as_str().unwrap();
+    // let new_url = json["properties"]["forecast"].as_str().unwrap();
 
-    let mut res = reqwest::blocking::get(new_url)?;
-    let mut body = String::new();
-    res.read_to_string(&mut body)?;
+    // let mut res = reqwest::blocking::get(new_url)?;
+    // let mut body = String::new();
+    // res.read_to_string(&mut body)?;
 
-    let json: Value = match serde_json::from_str(&body) {
-        Ok(json) => json,
-        Err(err) => return Err(Box::new(err)),
-    };
+    // let json: Value = match serde_json::from_str(&body) {
+    //     Ok(json) => json,
+    //     Err(err) => return Err(Box::new(err)),
+    // };
 
-    let forecast = json["properties"]["forecast"].to_string();
+    let forecast = json["current"]["temperature"].to_string();
 
     Ok(forecast)
 
