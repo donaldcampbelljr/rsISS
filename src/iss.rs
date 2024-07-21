@@ -163,7 +163,7 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
 
     //let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature").to_string();
 
-    let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature").to_string();
+    let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature,weather_code").to_string();
 
     let mut res = reqwest::blocking::get(constructed_url)?;
     let mut body = String::new();
@@ -185,8 +185,46 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
     //     Err(err) => return Err(Box::new(err)),
     // };
 
-    let forecast = json["current"]["temperature"].to_string();
+    let mut forecast = json["current"]["temperature"].to_string();
+
+    let weather_code = json["current"]["weather_code"].to_string();
+
+    let wmo_forecast = get_wmo_code(weather_code);
+
+    forecast.push_str(" degrees");
+    forecast.push_str("\n");
+    forecast.push_str(&wmo_forecast);
 
     Ok(forecast)
+
+}
+
+fn get_wmo_code(weather_code: String) -> String{
+
+    let code_int = match weather_code.parse::<i32>() {
+        Ok(num) => num,
+        Err(_) => 1001,
+      };
+    
+      // Match the integer code to weather condition
+      let condition = match code_int {
+        0 => "Clear sky".to_string(),
+        1..=3 => "Mainly clear, partly cloudy, or overcast".to_string(),
+        4..=8 => "Fog".to_string(),
+        51..=55 => "Drizzle (Light, moderate, or dense)".to_string(),
+        56..=57 => "Freezing Drizzle (Light or dense)".to_string(),
+        61..=65 => "Rain (Slight, moderate, or heavy)".to_string(),
+        66..=67 => "Freezing Rain (Light or heavy)".to_string(),
+        71..=75 => "Snowfall (Slight, moderate, or heavy)".to_string(),
+        77 => "Snow grains".to_string(),
+        80..=82 => "Rain showers (Slight, moderate, or violent)".to_string(),
+        85..=86 => "Snow showers (Slight or heavy)".to_string(),
+        95 => "Thunderstorm (Slight or moderate)".to_string(),
+        96..=99 => "Thunderstorm with slight or heavy hail".to_string(),
+        _ => "Unknown weather code".to_string(),};
+
+
+        return condition
+
 
 }
