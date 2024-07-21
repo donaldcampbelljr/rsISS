@@ -66,6 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     iss.alt = 417.5;
     iss.update_crew();
     iss.update_position();
+    iss.update_weather();
 
     // startup: Enable raw mode for the terminal, giving us fine control over user input
     crossterm::terminal::enable_raw_mode()?;
@@ -269,6 +270,8 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
 
     let crew_widget = Paragraph::new(format!("{0}", iss.crew)).block(Block::default().borders(Borders::ALL).title("Current ISS Crew".magenta().bold()));
 
+    let weather_widget = Paragraph::new(format!("{0}", iss.weather)).block(Block::default().borders(Borders::ALL).title("Current Weather at Coordinates".magenta().bold()));
+
 
     let current_widget= match app.current_screen {
         CurrentScreen::Tracker => {
@@ -289,7 +292,7 @@ pub fn ui(f: &mut Frame, app: &App, iss: &mut Iss,
         },
         CurrentScreen::Crew =>{
             f.render_widget(crew_widget, inner_layout2[0]);
-            f.render_widget(coordinates_widget, inner_layout2[1])
+            f.render_widget(weather_widget, inner_layout2[1])
         },
 
         _ => f.render_widget(tracking_widget, chunks[1]),
