@@ -122,9 +122,9 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Erro
 
     let rgeo_result =  search(latitude as f32, longitude as f32).unwrap_or((0.0, &default_record));
 
-    let flag = flag(rgeo_result.1.country.as_str()).unwrap_or(String::from("Unknown Country"));
-
-    let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
+    //let flag = flag(rgeo_result.1.country.as_str()).unwrap_or(String::from("Unknown Country"));
+    //let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
+    let countryString = String::from(rgeo_result.1.country.as_str());
 
     Ok(countryString)
 
