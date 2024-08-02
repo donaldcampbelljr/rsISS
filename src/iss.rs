@@ -8,6 +8,49 @@ use std::string::String;
 use serde_json::Value::String as JsonString;
 
 
+pub const weather_ascii_sun: &str = 
+
+"
+   | \n
+ ~ 0 ~\n
+   |\n
+";
+
+pub const weather_ascii_clouds: &str = 
+
+"
+    ~~~~\n
+   (░░░░) \n
+ (░░░░░░)\n
+ (░░░░░)\n
+";
+
+pub const weather_ascii_rain: &str = 
+
+"
+ !  !\n
+  '   ' '! \n
+ ' ' ! !\n
+ !  !\n
+";
+
+pub const weather_ascii_wind: &str = 
+
+"
+ ~  ~ ~\n
+   ~  ~  ~\n
+ ~ ~ ~ ~\n
+";
+
+pub const weather_ascii_outer_space: &str = 
+
+"
+ *       *\n
+      *   \n
+   *    \n
+";
+
+
 #[derive(Debug,Default)]
 pub struct Iss {
     pub lat: f64,
@@ -189,17 +232,58 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
 
     let weather_code = json["current"]["weather_code"].to_string();
 
-    let wmo_forecast = get_wmo_code(weather_code);
+    let wmo_forecast = get_wmo_code(&weather_code);
 
     forecast.push_str(" degrees");
     forecast.push_str("\n");
     forecast.push_str(&wmo_forecast);
 
+    let ascii_weather = get_weather_ascii(&weather_code);
+
+    forecast.push_str("\n");
+    forecast.push_str(&ascii_weather);
+
     Ok(forecast)
 
 }
 
-fn get_wmo_code(weather_code: String) -> String{
+pub fn get_weather_ascii(weather_code: &String) -> String {
+
+
+    let code_int = match weather_code.parse::<i32>() {
+        Ok(num) => num,
+        Err(_) => 1001,
+      };
+    
+      // Match the integer code to weather condition
+      let condition = match code_int {
+        0 => weather_ascii_sun,
+        1..=3 => weather_ascii_sun,
+        4..=8 => weather_ascii_clouds,
+        51..=55 => weather_ascii_rain,
+        56..=57 =>  weather_ascii_rain,
+        61..=65 =>  weather_ascii_rain,
+        66..=67 => weather_ascii_rain,
+        71..=75 =>  weather_ascii_rain,
+        77 =>  weather_ascii_rain,
+        80..=82 =>  weather_ascii_rain,
+        85..=86 =>  weather_ascii_rain,
+        95 => weather_ascii_rain,
+        96..=99 =>  weather_ascii_rain,
+        _ =>  weather_ascii_outer_space,};
+
+    let final_string = String::from_str(condition).unwrap();
+
+    //let final_string = weather_ascii_sun.to_string();
+    //let final_string = weather_ascii_wind.to_string();
+    //let final_string = weather_ascii_rain.to_string();
+    //let final_string = weather_ascii_outer_space.to_string();
+
+    final_string
+
+}
+
+fn get_wmo_code(weather_code: &String) -> String{
 
     let code_int = match weather_code.parse::<i32>() {
         Ok(num) => num,
