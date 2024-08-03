@@ -105,7 +105,7 @@ fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
                 color: Color::Yellow,
                 resolution: MapResolution::High,
             });
-            ctx.print(lon, lat, "ISS".red().add_modifier(Modifier::BOLD)); 
+            ctx.print(lon, lat, "ISS".red().add_modifier(Modifier::BOLD));
         })
         .x_bounds([lon - zoom, lon + zoom])
         .y_bounds([lat - zoom, lat + zoom])
@@ -169,7 +169,7 @@ pub fn ui(
     let title = Paragraph::new(Text::styled(
         title_content,
         Style::default()
-            .fg(Color::Yellow)
+            .fg(Color::White)
             .add_modifier(Modifier::BOLD),
     ))
     .block(title_block);
@@ -183,7 +183,7 @@ pub fn ui(
     let footer = Paragraph::new(Text::styled(
         footer_content,
         Style::default()
-            .fg(Color::Yellow)
+            .fg(Color::White)
             .add_modifier(Modifier::BOLD),
     ))
     .block(footer_block);
@@ -193,7 +193,7 @@ pub fn ui(
     let footer_instructions = Paragraph::new(Text::styled(
         footer_instructions_content,
         Style::default()
-            .fg(Color::Yellow)
+            .fg(Color::White)
             .add_modifier(Modifier::BOLD),
     ))
     .block(
