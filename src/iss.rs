@@ -1,8 +1,6 @@
-use country_emoji::flag;
 use rgeo::record::{Nvec, Record};
 use rgeo::search;
 use serde_json::Value;
-use serde_json::Value::String as JsonString;
 use std::io::Read;
 use std::str::FromStr;
 use std::string::String;

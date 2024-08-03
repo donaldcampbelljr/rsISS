@@ -2,12 +2,12 @@ use crate::iss::Iss;
 use chrono::prelude::*;
 use chrono::Duration;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{self, DisableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 use ratatui::layout::Direction::{Horizontal, Vertical};
-use ratatui::widgets::canvas::{Canvas, Map, MapResolution, Painter, Shape};
+use ratatui::widgets::canvas::{Canvas, Map, MapResolution};
 use ratatui::{prelude::*, widgets::*};
 use std::io;
 use OrbitalEphemerisMessage::Satellite;
@@ -105,13 +105,7 @@ fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
                 color: Color::Yellow,
                 resolution: MapResolution::High,
             });
-            ctx.print(lon, lat, "ISS".red().add_modifier(Modifier::BOLD)); //Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
-                                                                           // for i in 0..5 {
-                                                                           //     ctx.print(lon+2.0+(i as f64), lat+2.0+(i as f64), "-".green().add_modifier(Modifier::BOLD));
-                                                                           // }
-                                                                           // for (x,y) in hist_pos {
-                                                                           //     ctx.print(lon+2.0+(x), lat+2.0+(y), "-".green().add_modifier(Modifier::BOLD));
-                                                                           // }
+            ctx.print(lon, lat, "ISS".red().add_modifier(Modifier::BOLD)); 
         })
         .x_bounds([lon - zoom, lon + zoom])
         .y_bounds([lat - zoom, lat + zoom])
@@ -210,21 +204,8 @@ pub fn ui(
 
     f.render_widget(footer_instructions, footer_inner_layout[1]);
 
-    // let title_tabs_content = format!("TAB PLACEHOLDER");
-    //
-    // let title_tabs = Paragraph::new(Text::styled(
-    //     title_tabs_content,
-    //     Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
-    // ))        .block(Block::default()
-    //     .borders(Borders::ALL)
-    //     .style(Style::default().bg(Color::Magenta)));
-    //
-    // f.render_widget(title_tabs, title_inner_layout[1]);
-
-    //let widget1 = Paragraph::new(format!("{0} \n{1}", sat.meta_summary, sat.trajectory_summary)).block(Block::default().borders(Borders::ALL).title("OEM DATA".cyan().bold()));
     let tracking_widget = Paragraph::new(format!("\n Coordinates: \n LAT {0}  \n LON {1}  \n ALT {2} \n\n ISS Time: \n {3} \n Local Time: \n {4} \n\n Country: \n {5} \n\n Additional Info: \n {6}", iss.lat, iss.lon, iss.alt, utc, local, iss.country, iss.alt_perigee_apogee)).block(Block::default().borders(Borders::ALL).title("ISS Tracker".cyan().bold()));
     let map_widget = map_canvas(&iss.lat, &iss.lon, &zoom);
-    //let widget4 = Paragraph::new(format!("{0}", sat.meta_summary)).block(Block::default().borders(Borders::ALL).title("Upcoming Events".cyan().bold()));
     let trajectory_widget = Paragraph::new(format!("{0}", sat.trajectory_summary)).block(
         Block::default()
             .borders(Borders::ALL)
@@ -235,7 +216,6 @@ pub fn ui(
             .borders(Borders::ALL)
             .title("Future Trajectories".cyan().bold()),
     );
-    //let widget_time = Paragraph::new(format!("CURRENT RUN TIME: {0}", elapsed_time)).block(Block::default().borders(Borders::ALL).bg(Color::DarkGray));
 
     let future_coords_datasets = vec![Dataset::default()
         .name("pos")
