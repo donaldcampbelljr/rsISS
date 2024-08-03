@@ -108,12 +108,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "astro"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "199632e1a87451cf771da7adeba192cab923ede42657ac3de0133ba6f4ae14be"
-
-[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -281,16 +275,6 @@ name = "core-foundation-sys"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
-
-[[package]]
-name = "country-emoji"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d93ed3c15fd433a3e8f7e52e70968113d4cd572d84a9454d1899f64c72872f02"
-dependencies = [
- "lazy_static",
- "regex",
-]
 
 [[package]]
 name = "crossbeam-channel"
@@ -1716,10 +1700,8 @@ name = "rs_iss"
 version = "0.1.0"
 dependencies = [
  "OrbitalEphemerisMessage",
- "astro",
  "chrono",
  "coord_transforms",
- "country-emoji",
  "crossterm",
  "nalgebra 0.32.4",
  "ratatui",
