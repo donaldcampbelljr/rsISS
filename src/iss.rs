@@ -1,64 +1,52 @@
+use country_emoji::flag;
+use rgeo::record::{Nvec, Record};
+use rgeo::search;
+use serde_json::Value;
+use serde_json::Value::String as JsonString;
 use std::io::Read;
 use std::str::FromStr;
-use serde_json::{Value};
-use rgeo::{search};
-use rgeo::record::{Nvec, Record};
-use country_emoji::{flag};
 use std::string::String;
-use serde_json::Value::String as JsonString;
 
-
-pub const weather_ascii_sun: &str = 
-
-"
+pub const WEATHER_ASCII_SUN: &str = "
    | \n
  ~ 0 ~\n
    |\n
 ";
 
-pub const weather_ascii_clouds: &str = 
-
-"
+pub const WEATHER_ASCII_CLOUDS: &str = "
     ~~~~\n
    (░░░░) \n
  (░░░░░░)\n
  (░░░░░)\n
 ";
 
-pub const weather_ascii_rain: &str = 
-
-"
+pub const WEATHER_ASCII_RAIN: &str = "
  !  !\n
   '   ' '! \n
  ' ' ! !\n
  !  !\n
 ";
 
-pub const weather_ascii_wind: &str = 
-
-"
+pub const WEATHER_ASCII_WIND: &str = "
  ~  ~ ~\n
    ~  ~  ~\n
  ~ ~ ~ ~\n
 ";
 
-pub const weather_ascii_outer_space: &str = 
-
-"
+pub const WEATHER_ASCII_OUTER_SPACE: &str = "
  *       *\n
       *   \n
    *    \n
 ";
 
-
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct Iss {
     pub lat: f64,
     pub lon: f64,
     pub alt: f64,
     pub time: f64,
     pub country: String,
-    pub pos_data: Vec<(f64,f64)>,
+    pub pos_data: Vec<(f64, f64)>,
     pub prev_alt: f64,
     pub alt_perigee_apogee: String,
     pub crew: String,
@@ -71,23 +59,15 @@ impl Iss {
         Self::default()
     }
 
-    pub fn update_crew(&mut self)
-    {
+    pub fn update_crew(&mut self) {
         let current_crew = get_crew().unwrap();
         self.crew = current_crew.join("\n");
-
     }
 
-    pub fn update_weather(&mut self)
-    {
-        println!("Here is a PRINTED LINE");
-
+    pub fn update_weather(&mut self) {
         let weather = get_weather(self.lat, self.lon).unwrap();
 
-        //println!("{:?}", weather);
-
         self.weather = weather;
-
     }
 
     /// Set running to false to quit the application.
@@ -100,12 +80,9 @@ impl Iss {
         self.time = new_position.3;
         self.country = new_position.4;
         self.pos_data.push((new_position.0, new_position.1));
-        if self.prev_alt > self.alt
-        {
+        if self.prev_alt > self.alt {
             self.alt_perigee_apogee = String::from("Approaching Perigee");
-        }
-        else
-        {
+        } else {
             self.alt_perigee_apogee = String::from("Approaching Apogee");
         }
 
@@ -118,17 +95,10 @@ impl Iss {
         if self.alt.floor() < 372.0 {
             self.alt_perigee_apogee = String::from("Perigee Reached");
         }
-
     }
-    // fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    //     write!(f, "ISS {{ latitude: {}, longitude: {} }}", self.lat, self.lon)
-    // }
-
 }
 
-
-pub fn get_position() -> Result<(f64,f64, f64, f64, String), Box<dyn std::error::Error>> {
-
+pub fn get_position() -> Result<(f64, f64, f64, f64, String), Box<dyn std::error::Error>> {
     //let mut res = reqwest::blocking::get("http://api.open-notify.org/iss-now.json")?;
     // https://api.wheretheiss.at/v1/satellites/25544
     let mut res = reqwest::blocking::get("https://api.wheretheiss.at/v1/satellites/25544")?;
@@ -144,34 +114,31 @@ pub fn get_position() -> Result<(f64,f64, f64, f64, String), Box<dyn std::error:
     let longitude: f64 = json["longitude"].as_f64().expect("Desire a number");
     let altitude: f64 = json["altitude"].as_f64().expect("Desire a number");
     let timestamp: f64 = json["timestamp"].as_f64().expect("Desire a number");
-    let country: String = match get_country(latitude, longitude){
+    let country: String = match get_country(latitude, longitude) {
         Ok(country) => country,
         Err(e) => "Unknown Country".to_string(),
     };
 
-    Ok((latitude,longitude, altitude, timestamp, country))
+    Ok((latitude, longitude, altitude, timestamp, country))
 }
 
-pub fn get_country(lat: f64, lon: f64) -> Result<String,Box<dyn std::error::Error>>{
-
+pub fn get_country(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
     let latitude = lat;
-    let longitude =lon;
+    let longitude = lon;
 
-    let default_record = Record{
+    let default_record = Record {
         name: String::from("Unknown Location"),
         nvec: Nvec::from_lat_long(0.0, 0.0),
         country: String::from("Unknown Country"),
     };
 
-    let rgeo_result =  search(latitude as f32, longitude as f32).unwrap_or((0.0, &default_record));
+    let rgeo_result = search(latitude as f32, longitude as f32).unwrap_or((0.0, &default_record));
 
     //let flag = flag(rgeo_result.1.country.as_str()).unwrap_or(String::from("Unknown Country"));
     //let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
     let countryString = String::from(rgeo_result.1.country.as_str());
 
     Ok(countryString)
-
-
 }
 
 pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
@@ -184,28 +151,17 @@ pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
         Err(err) => return Err(Box::new(err)),
     };
 
-    //println!("{}", json["people"]);
-
     let new_array = json["people"].as_array().unwrap();
 
     let mut crew_member_list = Vec::new();
-    for val in new_array.into_iter(){
-        //println!("{}", val["name"]);
+    for val in new_array.into_iter() {
         crew_member_list.push(val["name"].to_string());
     }
 
     Ok((crew_member_list))
 }
 
-pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Error>> {
-
-
-    //let constructed_url = format!("https://api.weather.gov/points/{lat},{lon}").to_string();  //String::from_str("https://api.weather.gov/points/{lat},{lon}");
-
-    //let constructed_url = format!("https://api.weather.gov/points/38.8894,-77.0352").to_string(); //basic example given on website
-
-    //let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature").to_string();
-
+pub fn get_weather(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
     let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature,weather_code").to_string();
 
     let mut res = reqwest::blocking::get(constructed_url)?;
@@ -216,17 +172,6 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
         Ok(json) => json,
         Err(err) => return Err(Box::new(err)),
     };
-
-    // let new_url = json["properties"]["forecast"].as_str().unwrap();
-
-    // let mut res = reqwest::blocking::get(new_url)?;
-    // let mut body = String::new();
-    // res.read_to_string(&mut body)?;
-
-    // let json: Value = match serde_json::from_str(&body) {
-    //     Ok(json) => json,
-    //     Err(err) => return Err(Box::new(err)),
-    // };
 
     let mut forecast = json["current"]["temperature"].to_string();
 
@@ -244,54 +189,45 @@ pub fn get_weather(lat: f64, lon: f64) ->  Result<String, Box<dyn std::error::Er
     forecast.push_str(&ascii_weather);
 
     Ok(forecast)
-
 }
 
 pub fn get_weather_ascii(weather_code: &String) -> String {
-
-
     let code_int = match weather_code.parse::<i32>() {
         Ok(num) => num,
         Err(_) => 1001,
-      };
-    
-      // Match the integer code to weather condition
-      let condition = match code_int {
-        0 => weather_ascii_sun,
-        1..=3 => weather_ascii_sun,
-        4..=8 => weather_ascii_clouds,
-        51..=55 => weather_ascii_rain,
-        56..=57 =>  weather_ascii_rain,
-        61..=65 =>  weather_ascii_rain,
-        66..=67 => weather_ascii_rain,
-        71..=75 =>  weather_ascii_rain,
-        77 =>  weather_ascii_rain,
-        80..=82 =>  weather_ascii_rain,
-        85..=86 =>  weather_ascii_rain,
-        95 => weather_ascii_rain,
-        96..=99 =>  weather_ascii_rain,
-        _ =>  weather_ascii_outer_space,};
+    };
+
+    // Match the integer code to weather condition
+    let condition = match code_int {
+        0 => WEATHER_ASCII_SUN,
+        1..=3 => WEATHER_ASCII_SUN,
+        4..=8 => WEATHER_ASCII_CLOUDS,
+        51..=55 => WEATHER_ASCII_RAIN,
+        56..=57 => WEATHER_ASCII_RAIN,
+        61..=65 => WEATHER_ASCII_RAIN,
+        66..=67 => WEATHER_ASCII_RAIN,
+        71..=75 => WEATHER_ASCII_RAIN,
+        77 => WEATHER_ASCII_RAIN,
+        80..=82 => WEATHER_ASCII_RAIN,
+        85..=86 => WEATHER_ASCII_RAIN,
+        95 => WEATHER_ASCII_RAIN,
+        96..=99 => WEATHER_ASCII_RAIN,
+        _ => WEATHER_ASCII_OUTER_SPACE,
+    };
 
     let final_string = String::from_str(condition).unwrap();
 
-    //let final_string = weather_ascii_sun.to_string();
-    //let final_string = weather_ascii_wind.to_string();
-    //let final_string = weather_ascii_rain.to_string();
-    //let final_string = weather_ascii_outer_space.to_string();
-
     final_string
-
 }
 
-fn get_wmo_code(weather_code: &String) -> String{
-
+fn get_wmo_code(weather_code: &String) -> String {
     let code_int = match weather_code.parse::<i32>() {
         Ok(num) => num,
         Err(_) => 1001,
-      };
-    
-      // Match the integer code to weather condition
-      let condition = match code_int {
+    };
+
+    // Match the integer code to weather condition
+    let condition = match code_int {
         0 => "Clear sky".to_string(),
         1..=3 => "Mainly clear, partly cloudy, or overcast".to_string(),
         4..=8 => "Fog".to_string(),
@@ -305,10 +241,8 @@ fn get_wmo_code(weather_code: &String) -> String{
         85..=86 => "Snow showers (Slight or heavy)".to_string(),
         95 => "Thunderstorm (Slight or moderate)".to_string(),
         96..=99 => "Thunderstorm with slight or heavy hail".to_string(),
-        _ => "Unknown weather code".to_string(),};
+        _ => "Unknown weather code".to_string(),
+    };
 
-
-        return condition
-
-
+    return condition;
 }
