@@ -1,3 +1,4 @@
+#![cfg(not(target_arch = "wasm32"))]
 use crate::iss::Iss;
 use chrono::prelude::*;
 use chrono::Duration;

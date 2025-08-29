@@ -1,9 +1,13 @@
+#[cfg(not(target_arch = "wasm32"))]
 use rgeo::record::{Nvec, Record};
+#[cfg(not(target_arch = "wasm32"))]
 use rgeo::search;
+
 use serde_json::Value;
 use std::io::Read;
 use std::str::FromStr;
 use std::string::String;
+use serde::{Deserialize, Serialize};
 
 pub const WEATHER_ASCII_SUN: &str = "
    | \n
@@ -37,38 +41,76 @@ pub const WEATHER_ASCII_OUTER_SPACE: &str = "
    *    \n
 ";
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Iss {
     pub lat: f64,
     pub lon: f64,
     pub alt: f64,
+    #[cfg(not(target_arch = "wasm32"))]
     pub time: f64,
+    #[cfg(not(target_arch = "wasm32"))]
     pub country: String,
+    #[cfg(not(target_arch = "wasm32"))]
     pub pos_data: Vec<(f64, f64)>,
+    #[cfg(not(target_arch = "wasm32"))]
     pub prev_alt: f64,
+    #[cfg(not(target_arch = "wasm32"))]
     pub alt_perigee_apogee: String,
+    #[cfg(not(target_arch = "wasm32"))]
     pub crew: String,
+    #[cfg(not(target_arch = "wasm32"))]
     pub weather: String,
 }
 
 impl Iss {
     /// Constructs a new instance of [`Iss`].
     pub fn new() -> Self {
-        Self::default()
+        Iss {
+            lat: 0.0,
+            lon: 0.0,
+            alt: 0.0,
+            #[cfg(not(target_arch = "wasm32"))]
+            time: 0.0,
+            #[cfg(not(target_arch = "wasm32"))]
+            pos_data: Vec::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            prev_alt: 0.0,
+            #[cfg(not(target_arch = "wasm32"))]
+            country: String::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            alt_perigee_apogee: String::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            crew: String::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            weather: String::new(),
+        }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn update_crew(&mut self) {
         let current_crew = get_crew().unwrap();
         self.crew = current_crew.join("\n");
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn update_weather(&mut self) {
         let weather = get_weather(self.lat, self.lon).unwrap();
 
         self.weather = weather;
     }
+        // WASM stubs (so the interface is consistent)
+    #[cfg(target_arch = "wasm32")]
+    pub fn update_crew(&mut self) {
+        // No-op for WASM or simplified implementation
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn update_weather(&mut self) {
+        // No-op for WASM or simplified implementation
+    }
 
     /// Set running to false to quit the application.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn update_position(&mut self) {
         let new_position = get_position().unwrap();
         self.prev_alt = self.alt;
@@ -94,8 +136,19 @@ impl Iss {
             self.alt_perigee_apogee = String::from("Perigee Reached");
         }
     }
+#[cfg(target_arch = "wasm32")]
+pub async fn update_position_async(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    let new_position = get_position_async().await?; // This can fail, so propagate the error
+    self.lat = new_position.0;
+    self.lon = new_position.1;
+    self.alt = new_position.2;
+    
+    Ok(()) // Return success
 }
 
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_position() -> Result<(f64, f64, f64, f64, String), Box<dyn std::error::Error>> {
     //let mut res = reqwest::blocking::get("http://api.open-notify.org/iss-now.json")?;
     // https://api.wheretheiss.at/v1/satellites/25544
@@ -120,6 +173,22 @@ pub fn get_position() -> Result<(f64, f64, f64, f64, String), Box<dyn std::error
     Ok((latitude, longitude, altitude, timestamp, country))
 }
 
+#[cfg(target_arch = "wasm32")]
+async fn get_position_async() -> Result<(f64, f64, f64, String), Box<dyn std::error::Error>> {
+    let response = reqwest::get("https://api.wheretheiss.at/v1/satellites/25544").await?;
+    let json: Value = response.json().await?;
+    
+    let lat = json["latitude"].as_f64().unwrap();
+    let lon = json["longitude"].as_f64().unwrap();
+    let alt = json["altitude"].as_f64().unwrap();
+    
+    // No country lookup in WASM for now (rgeo doesn't work in WASM)
+    let country = String::from("Unknown");
+    
+    Ok((lat, lon, alt, country))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_country(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
     let latitude = lat;
     let longitude = lon;
@@ -139,6 +208,16 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Err
     Ok(countryString)
 }
 
+#[cfg(target_arch = "wasm32")]
+pub fn get_country(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
+    let latitude = lat;
+    let longitude = lon;
+    let countryString = String::from("The Undiscovered Country");
+
+    Ok(countryString)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let mut res = reqwest::blocking::get("http://api.open-notify.org/astros.json")?;
     let mut body = String::new();
@@ -158,7 +237,7 @@ pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 
     Ok((crew_member_list))
 }
-
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_weather(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
     let constructed_url = format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature,weather_code").to_string();
 
@@ -189,6 +268,7 @@ pub fn get_weather(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Err
     Ok(forecast)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_weather_ascii(weather_code: &String) -> String {
     let code_int = match weather_code.parse::<i32>() {
         Ok(num) => num,
@@ -218,6 +298,7 @@ pub fn get_weather_ascii(weather_code: &String) -> String {
     final_string
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn get_wmo_code(weather_code: &String) -> String {
     let code_int = match weather_code.parse::<i32>() {
         Ok(num) => num,
