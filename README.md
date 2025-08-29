@@ -1,4 +1,5 @@
-### Interactive ISS Tracker written in Rust
+# Interactive ISS Tracker written in Rust
+![alt text](logo/rsscrablogo.png)
 
 ## Track the ISS in real time using terminal
 
