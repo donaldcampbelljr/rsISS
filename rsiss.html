@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ISS Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .iss-info { 
+            border: 1px solid #ccc; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 5px; 
+        }
+        button { 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+        }
+    </style>
+</head>
+<body>
+    <h1>ISS Position Tracker</h1>
+    <div class="iss-info">
+        <h2>Current ISS Position</h2>
+        <p id="coordinates">Loading...</p>
+        <p id="country">Country: Loading...</p>
+        <p id="timestamp">Last Updated: Loading...</p>
+    </div>
+    <button onclick="updatePosition()">Update Position</button>
+    
+    <script type="module">
+    import init, { IssTracker } from './pkg/iss_ratatui.js';
+    
+    let tracker;
+    
+    async function run() {
+        await init();
+        tracker = new IssTracker();
+        await updatePosition(); // Initial load with real data
+        
+        // Auto-update every 30 seconds
+        setInterval(updatePosition, 30000);
+    }
+    
+    window.updatePosition = async function() {
+        if (tracker) {
+            try {
+                // Fetch real ISS data
+                const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+                const data = await response.json();
+                
+                // Update the tracker with real data
+                tracker.set_position(data.latitude, data.longitude, data.altitude);
+                
+                // Get and display the updated position
+                const position = tracker.get_position();
+                const coords = tracker.get_coordinates_string();
+                
+                document.getElementById('coordinates').textContent = coords;
+                document.getElementById('timestamp').textContent = `Last Updated: ${new Date(position.timestamp).toLocaleString()}`;
+                
+                console.log('Real ISS position updated:', position);
+            } catch (error) {
+                console.error('Error fetching ISS data:', error);
+            }
+        }
+    };
+    
+    run();
+</script>
+</body>
+</html>

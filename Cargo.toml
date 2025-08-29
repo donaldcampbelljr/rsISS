@@ -3,15 +3,38 @@ name = "rs_iss"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "iss_ratatui"  # This should match what you import in HTML
+crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "rs_iss"
+path = "src/main.rs"
+
+# Common dependencies for both targets
 [dependencies]
-chrono = "0.4.34"
-crossterm = "0.27.0"
-ratatui = { version = "0.24.0", features = ["all-widgets"] }
-reqwest = { version = "0.11.24", features = ["blocking", "json"] }
-serde_json = { version = "1.0.114" }
-rgeo = {git ="https://github.com/etrombly/rgeo.git"}
-OrbitalEphemerisMessage = { git="https://github.com/donaldcampbelljr/OrbitalEphemerisMessage.git" }
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1.0.114"
+
+# WASM-only dependencies
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.4"
+console_error_panic_hook = "0.1"
+web-sys = { version = "0.3", features = ["console", "Document", "Element", "HtmlElement", "Window"] }
+js-sys = "0.3"
+getrandom = { version = "0.2", features = ["js"] }
+reqwest = { version = "0.11", features = ["json", "blocking"], default-features = false }
+wasm-bindgen-futures = "0.4"
+
+# Native-only dependencies (not for WASM)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+crossterm = "0.27"
+ratatui = "0.25"
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+tokio = { version = "1.0", features = ["full"] }
+rgeo = { git = "https://github.com/etrombly/rgeo.git" }
+OrbitalEphemerisMessage = { git = "https://github.com/donaldcampbelljr/OrbitalEphemerisMessage.git" }
 coord_transforms = "1.4.0"
 nalgebra = "0.32.4"
