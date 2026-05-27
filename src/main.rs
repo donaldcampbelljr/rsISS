@@ -6,7 +6,7 @@ mod oem;
 mod ui;
 
 use app::{App, CurrentScreen};
-use crate::iss::Iss;
+use crate::iss::{get_position, Iss};
 use crate::oem::Satellite;
 use chrono::prelude::*;
 use chrono::Duration;
@@ -17,7 +17,20 @@ use crossterm::{
 };
 use ratatui::prelude::*;
 use std::io;
+use std::sync::mpsc;
+use std::thread;
 use ui::ui;
+
+type PositionResult = Option<(f64, f64, f64, f64, String)>;
+
+/// Spawn a background thread to fetch the ISS position.
+/// Sends `Some(pos)` on success or `None` on failure.
+fn spawn_position_fetch(tx: mpsc::Sender<PositionResult>) {
+    thread::spawn(move || {
+        let result = get_position().ok();
+        let _ = tx.send(result);
+    });
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nLoading Orbital Data....");
@@ -68,11 +81,23 @@ fn run_app<B: Backend>(
     sat: &mut Satellite,
     start_time: DateTime<Local>,
 ) -> io::Result<bool> {
+    let (tx, rx) = mpsc::channel::<PositionResult>();
+    let mut update_in_flight = false;
+
     let mut zoom = 50.0;
     let mut duration = 0;
-    loop {
-        let elapsed_time: Duration = Local::now() - start_time;
 
+    loop {
+        // Apply any position result that arrived from the background thread.
+        if let Ok(pos_opt) = rx.try_recv() {
+            update_in_flight = false;
+            duration = 0; // restart the 5.5s cooldown from when the response arrived
+            if let Some(pos) = pos_opt {
+                iss.apply_position_update(pos);
+            }
+        }
+
+        let elapsed_time: Duration = Local::now() - start_time;
         terminal.draw(|f| ui(f, app, iss, sat, zoom, elapsed_time))?;
 
         if crossterm::event::poll(std::time::Duration::from_millis(250))? {
@@ -90,7 +115,10 @@ fn run_app<B: Backend>(
                             app.current_screen = CurrentScreen::Exiting;
                         }
                         KeyCode::Char('u') => {
-                            iss.update_position();
+                            if !update_in_flight {
+                                spawn_position_fetch(tx.clone());
+                                update_in_flight = true;
+                            }
                         }
                         KeyCode::Char(']') => {
                             zoom -= 10.0;
@@ -108,7 +136,10 @@ fn run_app<B: Backend>(
                             app.current_screen = CurrentScreen::Exiting;
                         }
                         KeyCode::Char('u') => {
-                            iss.update_position();
+                            if !update_in_flight {
+                                spawn_position_fetch(tx.clone());
+                                update_in_flight = true;
+                            }
                         }
                         KeyCode::Char(']') => {
                             zoom -= 10.0;
@@ -126,7 +157,10 @@ fn run_app<B: Backend>(
                             app.current_screen = CurrentScreen::Exiting;
                         }
                         KeyCode::Char('u') => {
-                            iss.update_position();
+                            if !update_in_flight {
+                                spawn_position_fetch(tx.clone());
+                                update_in_flight = true;
+                            }
                         }
                         _ => {}
                     },
@@ -138,7 +172,10 @@ fn run_app<B: Backend>(
                             app.current_screen = CurrentScreen::Exiting;
                         }
                         KeyCode::Char('u') => {
-                            iss.update_position();
+                            if !update_in_flight {
+                                spawn_position_fetch(tx.clone());
+                                update_in_flight = true;
+                            }
                         }
                         _ => {}
                     },
@@ -156,8 +193,9 @@ fn run_app<B: Backend>(
         } else {
             duration += 250;
 
-            if duration >= 5500 {
-                iss.update_position();
+            if duration >= 5500 && !update_in_flight {
+                spawn_position_fetch(tx.clone());
+                update_in_flight = true;
                 duration = 0;
             }
         }

@@ -112,26 +112,32 @@ impl Iss {
     /// Set running to false to quit the application.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn update_position(&mut self) {
-        let new_position = get_position().unwrap();
+        if let Ok(pos) = get_position() {
+            self.apply_position_update(pos);
+        }
+    }
+
+    /// Apply a pre-fetched position result. Separated from `update_position` so
+    /// the network call can be done on a background thread without blocking the UI.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn apply_position_update(&mut self, pos: (f64, f64, f64, f64, String)) {
         self.prev_alt = self.alt;
-        self.lat = new_position.0;
-        self.lon = new_position.1;
-        self.alt = new_position.2;
-        self.time = new_position.3;
-        self.country = new_position.4;
-        self.pos_data.push((new_position.0, new_position.1));
+        self.lat = pos.0;
+        self.lon = pos.1;
+        self.alt = pos.2;
+        self.time = pos.3;
+        self.country = pos.4;
+        self.pos_data.push((pos.0, pos.1));
         if self.prev_alt > self.alt {
             self.alt_perigee_apogee = String::from("Approaching Perigee");
         } else {
             self.alt_perigee_apogee = String::from("Approaching Apogee");
         }
 
-        // these numbers are reported differently across the internet: 370-460 km as the altitude
-        // 413 and 422 reported as the perigee and apogee
+        // 370-460 km typical altitude range; 413/422 reported as perigee/apogee
         if self.alt.floor() > 429.0 {
             self.alt_perigee_apogee = String::from("Apogee Reached");
         }
-
         if self.alt.floor() < 372.0 {
             self.alt_perigee_apogee = String::from("Perigee Reached");
         }
