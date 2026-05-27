@@ -4,7 +4,7 @@ use chrono::prelude::*;
 use chrono::Duration;
 use ratatui::widgets::canvas::{Canvas, Map, MapResolution};
 use ratatui::{prelude::*, widgets::*};
-use OrbitalEphemerisMessage::Satellite;
+use crate::oem::Satellite;
 
 fn map_canvas(&lat: &f64, &lon: &f64, zoom: &f64) -> impl Widget + 'static {
     Canvas::default()

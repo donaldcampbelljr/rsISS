@@ -2,10 +2,12 @@
 
 mod app;
 pub mod iss;
+mod oem;
 mod ui;
 
 use app::{App, CurrentScreen};
 use crate::iss::Iss;
+use crate::oem::Satellite;
 use chrono::prelude::*;
 use chrono::Duration;
 use crossterm::{
@@ -16,21 +18,20 @@ use crossterm::{
 use ratatui::prelude::*;
 use std::io;
 use ui::ui;
-use OrbitalEphemerisMessage::Satellite;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nLoading Orbital Data....");
 
     let start_time: DateTime<Local> = Local::now();
 
-    let url = OrbitalEphemerisMessage::ISS_OEM_URL;
-    let content = OrbitalEphemerisMessage::download_file(url);
+    let url = oem::ISS_OEM_URL;
+    let content = oem::download_file(url);
 
     let mut sat = match content {
-        Ok(content) => OrbitalEphemerisMessage::construct_oem(&content),
+        Ok(content) => oem::construct_oem(&content),
         Err(error) => {
             println!("Error downloading content: {}", error);
-            OrbitalEphemerisMessage::Satellite::default()
+            Satellite::default()
         }
     };
 
