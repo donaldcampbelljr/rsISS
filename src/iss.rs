@@ -167,7 +167,7 @@ pub fn get_position() -> Result<(f64, f64, f64, f64, String), Box<dyn std::error
     let timestamp: f64 = json["timestamp"].as_f64().expect("Desire a number");
     let country: String = match get_country(latitude, longitude) {
         Ok(country) => country,
-        Err(e) => "Unknown Country".to_string(),
+        Err(_) => "Unknown Country".to_string(),
     };
 
     Ok((latitude, longitude, altitude, timestamp, country))
@@ -203,9 +203,9 @@ pub fn get_country(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Err
 
     //let flag = flag(rgeo_result.1.country.as_str()).unwrap_or(String::from("Unknown Country"));
     //let countryString = String::from(rgeo_result.1.country.as_str()) + "\n" + flag.as_str();
-    let countryString = String::from(rgeo_result.1.country.as_str());
+    let country_string = String::from(rgeo_result.1.country.as_str());
 
-    Ok(countryString)
+    Ok(country_string)
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -235,7 +235,7 @@ pub fn get_crew() -> Result<Vec<String>, Box<dyn std::error::Error>> {
         crew_member_list.push(val["name"].to_string());
     }
 
-    Ok((crew_member_list))
+    Ok(crew_member_list)
 }
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_weather(lat: f64, lon: f64) -> Result<String, Box<dyn std::error::Error>> {
